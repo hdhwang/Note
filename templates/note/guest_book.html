@@ -1,0 +1,161 @@
+{% extends 'note/base/base.html' %}
+{% load static %}
+
+{% block link %}
+    <!-- DataTables -->
+    <link rel="stylesheet" href="{% static 'plugins/datatables-bs4/css/dataTables.bootstrap4.min.css' %}">
+    <link rel="stylesheet" href="{% static 'plugins/datatables-responsive/css/responsive.bootstrap4.min.css' %}">
+    <link rel="stylesheet" href="{% static 'plugins/datatables-buttons/css/buttons.bootstrap4.min.css' %}">
+    <link rel="stylesheet" href="{% static 'plugins/jquery-ui/jquery-ui.min.css' %}">
+{% endblock %}
+
+{% block guest_book %}active{% endblock %}
+
+{% block page-title %}결혼식 방명록{% endblock %}
+{% block page-path %}
+    <li class="breadcrumb-item active">결혼식 방명록</li>
+{% endblock %}
+
+{% block content %}
+    <!-- Default box -->
+    <div class="card">
+        <div class="card-body">
+            <table id="table-data" class="table table-bordered table-striped" style="width:100%">
+                <thead>
+                <tr>
+                    <th></th>
+                    <th>번호</th>
+                    <th>이름</th>
+                    <th>금액</th>
+                    <th>일자</th>
+                    <th>장소</th>
+                    <th>참석 여부</th>
+                    <th>설명</th>
+                </tr>
+                </thead>
+
+                <!-- 필터 항목 -->
+                <tfoot id="table-foot">
+                <tr>
+                    <th data-column="0"></th>                       <!-- 체크 박스 -->
+                    <th data-column="1"></th>                       <!-- 번호 -->
+                    <th data-column="2"><input type="text"></th>    <!-- 이름 -->
+                    <th data-column="3"><input type="text"></th>    <!-- 금액 -->
+                    <th data-column="4"></th>                       <!-- 일자 -->
+                    <th data-column="5"><input type="text"></th>    <!-- 장소 -->
+                    <th data-column="6">                            <!-- 참석 여부 -->
+                        <select>
+                            <option value=""></option>
+                            <option value="Y">참석</option>
+                            <option value="N">미참석</option>
+                            <option value="-">미정</option>
+                        </select>
+                    </th>
+                    <th data-column="7"><input type="text"></th>    <!-- 설명 -->
+
+                </tr>
+                </tfoot>
+            </table>
+        </div>
+        <!-- /.card-body -->
+    </div>
+    <!-- /.card -->
+
+    <!-- 결혼식 방명록 추가 -->
+    <div class="modal fade" id="menu-modal">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title" id="modal-title">결혼식 방명록 추가</h4>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span></button>
+                </div>
+                <div class="modal-body">
+                    <!-- form start -->
+                    <form class="form-horizontal">
+                        <div class="box-body">
+                            <div class="form-group row">
+                                <label for="name" class="col-sm-3 control-label">이름<span class="text-red">*</span></label>
+
+                                <div class="col-sm-9">
+                                    <input type="text" class="form-control" id="name" placeholder="이름을 입력하십시오.">
+                                </div>
+                            </div>
+
+                            <div class="form-group row">
+                                <label for="amount" class="col-sm-3 control-label">금액</label>
+
+                                <div class="col-sm-9">
+                                    <input type="number" class="form-control" id="amount" min="0" max="9999999" maxlength="7" oninput="maxLengthCheck(this)">
+                                </div>
+                            </div>
+
+                            <div class="form-group row">
+                                <label for="date" class="col-sm-3 control-label">날짜</label>
+
+                                <div class="col-sm-9">
+                                    <input type="date" class="form-control" id="date">
+                                </div>
+                            </div>
+
+                            <div class="form-group row">
+                                <label for="area" class="col-sm-3 control-label">장소</label>
+
+                                <div class="col-sm-9">
+                                    <input type="text" class="form-control" id="area">
+                                </div>
+                            </div>
+
+                            <div class="form-group row">
+                                <label for="attend" class="col-sm-3 control-label">참석 여부<span class="text-red">*</span></label>
+
+                                <div class="col-sm-9">
+                                    <select class="form-control" id="attend">
+                                        <option value="">참석 여부 선택</option>
+                                        <option value="Y">참석</option>
+                                        <option value="N">미참석</option>
+                                        <option value="-">미정</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="form-group row">
+                                <label for="description" class="col-sm-3 control-label">설명</label>
+
+                                <div class="col-sm-9">
+                                    <textarea rows="5" class="form-control" id="description" placeholder="설명을 입력하십시오."></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default pull-left" id="btn-reset">초기화</button>
+                    <button type="button" class="btn btn-primary" id="btn-ok">추가</button>
+                    <button type="button" class="btn btn-default pull-right" id="btn-cancel" data-dismiss="modal">취소</button>
+                </div>
+            </div>
+            <!-- /.modal-content -->
+        </div>
+        <!-- /.modal-dialog -->
+    </div>
+    <!-- 결혼식 방명록 추가 -->
+{% endblock %}
+
+{% block script %}
+    <script src="{% static 'note/guest_book.js' %}"></script>
+
+    <!-- DataTables  & Plugins -->
+    <script src="{% static 'plugins/datatables/jquery.dataTables.min.js' %}"></script>
+    <script src="{% static 'plugins/datatables-bs4/js/dataTables.bootstrap4.min.js' %}"></script>
+    <script src="{% static 'plugins/datatables-responsive/js/dataTables.responsive.min.js' %}"></script>
+    <script src="{% static 'plugins/datatables-responsive/js/responsive.bootstrap4.min.js' %}"></script>
+    <script src="{% static 'plugins/datatables-buttons/js/dataTables.buttons.min.js' %}"></script>
+    <script src="{% static 'plugins/datatables-buttons/js/buttons.bootstrap4.min.js' %}"></script>
+    <script src="{% static 'plugins/jszip/jszip.min.js' %}"></script>
+    <script src="{% static 'plugins/pdfmake/pdfmake.min.js' %}"></script>
+    <script src="{% static 'plugins/pdfmake/vfs_fonts.js' %}"></script>
+    <script src="{% static 'plugins/datatables-buttons/js/buttons.html5.min.js' %}"></script>
+    <script src="{% static 'plugins/datatables-buttons/js/buttons.print.min.js' %}"></script>
+    <script src="{% static 'plugins/datatables-buttons/js/buttons.colVis.min.js' %}"></script>
+{% endblock %}

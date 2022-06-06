@@ -1,0 +1,100 @@
+{% extends 'note/base/base.html' %}
+{% load static %}
+
+{% block link %}
+{% endblock %}
+
+{% block dashboard %}active{% endblock %}
+
+{% block page-title %}대시보드{% endblock %}
+{% block page-path %}
+    <li class="breadcrumb-item active">대시보드</li>
+{% endblock %}
+
+{% block content %}
+    <div id="dashboard" class="row">
+        <div class="col-lg-3 col-xs-6">
+            <!-- small box -->
+            <div class="small-box bg-green">
+                <div class="overlay" id="bank-account-overlay">
+                    <i class="fas fa-3x fa-sync-alt fa-spin"></i>
+                </div>
+
+                <div class="inner">
+                    <h2 id="bank-account">
+                        Loading..
+                    </h2>
+                    <p>계좌번호</p>
+                </div>
+                <div class="icon">
+                    <i class="fa fa-bank"></i>
+                </div>
+                <a href="{% url 'bank_account' %}" class="small-box-footer">상세 보기 <i class="fa fa-arrow-circle-right"></i></a>
+            </div>
+        </div>
+
+        <div class="col-lg-3 col-xs-6">
+            <!-- small box -->
+            <div class="small-box bg-blue">
+                <div class="overlay" id="serial-overlay">
+                    <i class="fas fa-3x fa-sync-alt fa-spin"></i>
+                </div>
+
+                <div class="inner">
+                    <h2 id="serial">
+                        Loading..
+                    </h2>
+                    <p>시리얼 번호</p>
+                </div>
+                <div class="icon">
+                    <i class="fa fa-key"></i>
+                </div>
+                <a href="{% url 'serial' %}" class="small-box-footer">상세 보기 <i class="fa fa-arrow-circle-right"></i></a>
+            </div>
+        </div>
+
+        <div class="col-lg-3 col-xs-6">
+            <!-- small box -->
+            <div class="small-box bg-purple">
+                <div class="overlay" id="note-overlay">
+                    <i class="fas fa-3x fa-sync-alt fa-spin"></i>
+                </div>
+
+                <div class="inner">
+                    <h2 id="note">
+                        Loading..
+                    </h2>
+                    <p>노트</p>
+                </div>
+                <div class="icon">
+                    <i class="fa fa-sticky-note-o"></i>
+                </div>
+                <a href="{% url 'note' %}" class="small-box-footer">상세 보기 <i class="fa fa-arrow-circle-right"></i></a>
+            </div>
+        </div>
+
+        <div class="col-lg-3 col-xs-6">
+            <!-- small box -->
+            <div class="small-box bg-olive">
+                <div class="overlay" id="guest-book-overlay">
+                    <i class="fas fa-3x fa-sync-alt fa-spin"></i>
+                </div>
+
+                <div class="inner">
+                    <h2 id="guest-book">
+                        Loading..
+                    </h2>
+                    <p>결혼식 방명록</p>
+                </div>
+                <div class="icon">
+                    <i class="fa fa-book"></i>
+                </div>
+                <a href="{% url 'guest_book' %}" class="small-box-footer">상세 보기 <i class="fa fa-arrow-circle-right"></i></a>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block script %}
+    <script src="{% static 'note/dashboard.js' %}"></script>
+{% endblock %}
