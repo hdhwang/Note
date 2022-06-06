@@ -16,9 +16,14 @@ $ pip3 install -r requirements.txt
 (venv)$ python3 manage.py loaddata note/data_auth.json --settings=config.settings.development
 ```
 
+> 프로젝트 SuperUser 생성
+```
+(venv)$ python3 manage.py creatsuperuser --settings=config.settings.development
+```
+
 > 개발 환경 실행 명령어
 ```
-(venv)$ python3 {project_path}/manage.py runserver --settings=config.settings.development
+(venv)$ python3 manage.py runserver --settings=config.settings.development
 ```
 
 
