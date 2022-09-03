@@ -84,7 +84,7 @@ function initDataTable() {
                 },
                 orderable: false,
             },
-            { className: 'dt-center', data: 'user__username', defaultContent: '', render: $.fn.dataTable.render.text() },
+            { className: 'dt-center', data: 'user', defaultContent: '', render: $.fn.dataTable.render.text() },
             { className: 'dt-center', data: 'ip', defaultContent: '', render: $.fn.dataTable.render.text() },
             { className: 'dt-center', data: 'category', defaultContent: '', render: $.fn.dataTable.render.text() },
             { className: 'dt-center', data: 'sub_category', defaultContent: '', render: $.fn.dataTable.render.text() },
@@ -94,11 +94,11 @@ function initDataTable() {
                 data: 'result',
                 defaultContent: '',
                 render: function (data, type, row) {
-                    let html = (data == 1) ? '<span class="badge bg-primary">성공</span>' : '<span class="badge bg-danger">실패</span>';
+                    let html = (data == 'Y') ? '<span class="badge bg-primary">성공</span>' : '<span class="badge bg-danger">실패</span>';
                     return html;
                 }
             },
-            { className: 'dt-center', data: 'audit_date', defaultContent: '', render: $.fn.dataTable.render.text() },
+            { className: 'dt-center', data: 'date', defaultContent: '', render: $.fn.dataTable.render.text() },
         ],
         rowId: 'field_id',
         dom: getDataTablesDom(),
