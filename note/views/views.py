@@ -256,7 +256,7 @@ class TableAPIView(View):
             params['page_size'] = page_size
             
             headers = {'Authorization': f'Token {get_user_token(request)}', 'Content-Type': 'application/json'}
-            response = requests.get(f'{self.base_url}/{self.sub_path}', params=params, headers=headers)
+            response = requests.get(f'{self.base_url}/{self.sub_path}', params=params, headers=headers, verify=False)
             if response.status_code == 200 and response.json():
                 data = response.json().get('results')
                 count = response.json().get('count')
@@ -276,7 +276,7 @@ class TableAPIView(View):
                 data[key] = value
 
             headers = {'Authorization': f'Token {get_user_token(request)}', 'Content-Type': 'application/json'}
-            response = requests.post(f'{self.base_url}/{self.sub_path}', data=json.dumps(data), headers=headers)
+            response = requests.post(f'{self.base_url}/{self.sub_path}', data=json.dumps(data), headers=headers, verify=False)
 
             return HttpResponse(status=response.status_code)
 
@@ -295,7 +295,7 @@ class TableAPIView(View):
                     data[key] = value
 
                 headers = {'Authorization': f'Token {get_user_token(request)}', 'Content-Type': 'application/json'}
-                response = requests.put(f'{self.base_url}/{self.sub_path}/{req_id}', data=json.dumps(data), headers=headers)
+                response = requests.put(f'{self.base_url}/{self.sub_path}/{req_id}', data=json.dumps(data), headers=headers, verify=False)
 
                 return HttpResponse(status=response.status_code)
 
@@ -307,7 +307,7 @@ class TableAPIView(View):
         try:
             if req_id:
                 headers = {'Authorization': f'Token {get_user_token(request)}', 'Content-Type': 'application/json'}
-                response = requests.delete(f'{self.base_url}/{self.sub_path}/{req_id}', headers=headers)
+                response = requests.delete(f'{self.base_url}/{self.sub_path}/{req_id}', headers=headers, verify=False)
 
                 return HttpResponse(status=response.status_code)
 
