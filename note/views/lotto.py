@@ -35,7 +35,7 @@ class LottoAPI(View):
                     draw = value
 
             headers = {'Authorization': f'Token {get_user_token(request)}', 'Content-Type': 'application/json'}
-            response = requests.get(f'{base_url}/{sub_path}', headers=headers)
+            response = requests.get(f'{base_url}/{sub_path}', headers=headers, verify=False)
             if response.status_code == 200 and response.json():
                 data = response.json()
                 total = len(response.json())
