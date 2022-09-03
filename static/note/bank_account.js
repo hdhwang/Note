@@ -23,7 +23,7 @@ function initDataTable() {
                 checkRedirectLoginPage(error, $(location).attr('pathname'));  //로그인 페이지 리다이렉트 여부 확인
 
                 let msg = getHttpStatusMessage(xhr.status) != '' ? getHttpStatusMessage(xhr.status) : '오류가 발생하였습니다. 잠시 후 다시 시도해 주십시오.';
-                toastr.success(msg);
+                toastr.error(msg);
                 $('#table-data_processing').hide();
             }
         },
@@ -60,9 +60,9 @@ function initDataTable() {
         ],
         rowId: 'id',
         dom: getDataTablesDom(),
-        lengthMenu: [[10, 20, 50, -1], [10, 20, 50, '전체']],      //페이지 당 갯수
-        order: [[2, 'asc']],                                   //조회 시 은행 기준 기본 정렬
-        drawCallback: function (settings, json)                   //조회 완료 후 처리
+        lengthMenu: [[10, 20, 50], [10, 20, 50]],               //페이지 당 갯수
+        order: [[2, 'asc']],                                    //조회 시 은행 기준 기본 정렬
+        drawCallback: function (settings, json)                 //조회 완료 후 처리
         {
             //iCheck 초기화
             initICheck();
@@ -279,7 +279,7 @@ function editData(id, param) {
 
         })
         .then(function (response) {
-            if (response && response.status == 204) {
+            if (response && response.status == 200) {
                 toastr.success('계좌번호 편집에 성공하였습니다.');
                 reloadTable();
             }

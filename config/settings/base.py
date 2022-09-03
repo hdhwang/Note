@@ -44,6 +44,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'rest_framework',
+    'rest_framework.authtoken',
     'note',
     'axes',                     # Axes app can be in any position in the INSTALLED_APPS list.
     'django_crontab',

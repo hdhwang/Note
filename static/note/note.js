@@ -54,11 +54,11 @@ function initDataTable() {
                 orderable: false,
             },
             { className: 'dt-center link', data: 'title', defaultContent: '', render: $.fn.dataTable.render.text() },
-            { className: 'dt-center link', data: 'note_date', defaultContent: '', render: $.fn.dataTable.render.text() },
+            { className: 'dt-center link', data: 'date', defaultContent: '', render: $.fn.dataTable.render.text() },
         ],
         rowId: 'id',
         dom: getDataTablesDom(),
-        lengthMenu: [[10, 20, 50, -1], [10, 20, 50, '전체']],      //페이지 당 갯수
+        lengthMenu: [[10, 20, 50], [10, 20, 50]],      //페이지 당 갯수
         order: [[3, 'desc']],                                   //조회 시 등록/수정 일자 기준 정렬
         drawCallback: function (settings, json)                   //조회 완료 후 처리
         {
@@ -267,7 +267,7 @@ function editData(id, param) {
 
         })
         .then(function (response) {
-            if (response && response.status == 204) {
+            if (response && response.status == 200) {
                 toastr.success('노트 편집에 성공하였습니다.');
                 reloadTable();
             }

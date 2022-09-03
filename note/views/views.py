@@ -4,6 +4,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth.hashers import check_password
 from django.contrib import auth
 from django.http import JsonResponse, HttpResponse
+from django.http.multipartparser import MultiPartParser
 from django.contrib.auth.views import LogoutView
 from django.contrib.auth import logout as auth_logout
 from django.contrib.sessions.models import Session
@@ -14,8 +15,14 @@ from note.util.dicHelper import get_dic_value
 from note.util.formatHelper import *
 from note.util.logHelper import insert_audit_log
 from note.util.networkHelper import get_client_ip
+from note.util.regexHelper import *
+from note.util.tokenHelper import get_user_token
+
 
 import logging
+import math
+import requests
+import json
 logger = logging.getLogger(__name__)
 
 
@@ -201,3 +208,109 @@ class DataTablesKoreanView(View):
         }
 
         return JsonResponse(response)
+
+
+class TableAPIView(View):
+    base_url = getattr(settings, 'API_BASE_URL')
+    sub_path = ''
+
+    def get(self, request):
+        try:
+            params = {}
+
+            page = 1
+            page_size = 10
+            start = 0
+
+            # LIMIT 및 필터 설정
+            for param in request.GET.items():
+                key = param[0]
+                value = param[1]
+
+                if key == 'start':
+                    start = to_int(value) + 1
+
+                elif key == 'length' and to_int(value) > 0:
+                    page_size = to_int(value)
+
+                # XSS 방지를 위한 파라미터
+                elif key == 'draw':
+                    draw = value
+
+                # 정렬 설정
+                elif key == 'order[order]':
+                    req_ordering = value
+                    req_order_dir = request.GET.get('order[dir]')
+                    params['ordering'] = req_order_dir + req_ordering
+
+                # 필터 설정
+                elif table_filter_regex.search(key) and value != '':
+                    filter_key = f'{key.split("[value]")[0]}[data]'
+                    filter_name = get_dic_value(request.GET, filter_key)
+                    params[filter_name] = value
+
+            if start > 0:
+                page = math.ceil(start / page_size)
+
+            params['page'] = page
+            params['page_size'] = page_size
+            
+            headers = {'Authorization': f'Token {get_user_token(request)}', 'Content-Type': 'application/json'}
+            response = requests.get(f'{self.base_url}/{self.sub_path}', params=params, headers=headers)
+            if response.status_code == 200 and response.json():
+                data = response.json().get('results')
+                count = response.json().get('count')
+
+            return JsonResponse(
+                {'draw': draw, 'recordsTotal': count, 'recordsFiltered': count, 'data': data})
+
+        except Exception as e:
+            logger.warning(f'[TableAPIView - get] {to_str(e)}')
+            return HttpResponse(status=400)
+
+    def post(self, request):
+        try:
+            data = {}
+
+            for key, value in request.POST.items():
+                data[key] = value
+
+            headers = {'Authorization': f'Token {get_user_token(request)}', 'Content-Type': 'application/json'}
+            response = requests.post(f'{self.base_url}/{self.sub_path}', data=json.dumps(data), headers=headers)
+
+            return HttpResponse(status=response.status_code)
+
+        except Exception as e:
+            logger.warning(f'[TableAPIView - post] {to_str(e)}')
+            return HttpResponse(status=400)
+
+    def put(self, request, req_id):
+        try:
+            if req_id:
+                # put data 파싱
+                put_data = MultiPartParser(request.META, request, request.upload_handlers).parse()[0]
+                data = {}
+
+                for key, value in put_data.items():
+                    data[key] = value
+
+                headers = {'Authorization': f'Token {get_user_token(request)}', 'Content-Type': 'application/json'}
+                response = requests.put(f'{self.base_url}/{self.sub_path}/{req_id}', data=json.dumps(data), headers=headers)
+
+                return HttpResponse(status=response.status_code)
+
+        except Exception as e:
+            logger.warning(f'[TableAPIView - put] {to_str(e)}')
+            return HttpResponse(status=400)
+
+    def delete(self, request, req_id):
+        try:
+            if req_id:
+                headers = {'Authorization': f'Token {get_user_token(request)}', 'Content-Type': 'application/json'}
+                response = requests.delete(f'{self.base_url}/{self.sub_path}/{req_id}', headers=headers)
+
+                return HttpResponse(status=response.status_code)
+
+        except Exception as e:
+            logger.warning(f'[TableAPIView - delete] {to_str(e)}')
+            return HttpResponse(status=400)

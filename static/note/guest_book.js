@@ -83,7 +83,7 @@ function initDataTable() {
         ],
         rowId: 'id',
         dom: getDataTablesDom(),
-        lengthMenu: [[10, 20, 50, -1], [10, 20, 50, '전체']],      //페이지 당 갯수
+        lengthMenu: [[10, 20, 50], [10, 20, 50]],      //페이지 당 갯수
         order: [[2, 'asc']],                                   //조회 시 이름 기준 기본 정렬
         drawCallback: function (settings, json)                   //조회 완료 후 처리
         {
@@ -313,7 +313,7 @@ function editData(id, param) {
 
         })
         .then(function (response) {
-            if (response && response.status == 204) {
+            if (response && response.status == 200) {
                 toastr.success('결혼식 방명록 편집에 성공하였습니다.');
                 reloadTable();
             }
