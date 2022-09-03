@@ -7,7 +7,6 @@ charset-normalizer==2.0.6
 Django==4.0.6
 django-appconf==1.0.4
 django-axes==5.25.0
-django-cors-headers==3.13.0
 django-crontab==0.7.1
 django-ipware==4.0.0
 djangorestframework==3.13.1
