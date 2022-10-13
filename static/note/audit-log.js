@@ -94,7 +94,7 @@ function initDataTable() {
                 data: 'result',
                 defaultContent: '',
                 render: function (data, type, row) {
-                    let html = (data == 'Y') ? '<span class="badge bg-primary">성공</span>' : '<span class="badge bg-danger">실패</span>';
+                    let html = (data == '성공') ? '<span class="badge bg-primary">성공</span>' : '<span class="badge bg-danger">실패</span>';
                     return html;
                 }
             },
