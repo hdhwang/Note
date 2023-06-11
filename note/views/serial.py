@@ -4,7 +4,7 @@ from note.views.views import TableAPIView
 
 # 시리얼 번호 관리
 class SerialView(TemplateView):
-    template_name = 'note/serial.html'
+    template_name = "note/serial.html"
     context = {}
 
     def get(self, request, *args, **kwargs):
@@ -12,4 +12,4 @@ class SerialView(TemplateView):
 
 
 class SerialAPI(TableAPIView):
-    sub_path = 'serial'
+    sub_path = "serial"

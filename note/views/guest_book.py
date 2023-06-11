@@ -4,7 +4,7 @@ from note.views.views import TableAPIView
 
 # 결혼식 방명록
 class GuestBookView(TemplateView):
-    template_name = 'note/guest_book.html'
+    template_name = "note/guest_book.html"
     context = {}
 
     def get(self, request, *args, **kwargs):
@@ -12,4 +12,4 @@ class GuestBookView(TemplateView):
 
 
 class GuestBookAPI(TableAPIView):
-    sub_path = 'guest-book'
+    sub_path = "guest-book"

@@ -4,7 +4,7 @@ from note.views.views import TableAPIView
 
 # 계좌번호 관리
 class BankAccountView(TemplateView):
-    template_name = 'note/bank_account.html'
+    template_name = "note/bank_account.html"
     context = {}
 
     def get(self, request, *args, **kwargs):
@@ -12,4 +12,4 @@ class BankAccountView(TemplateView):
 
 
 class BankAccountAPI(TableAPIView):
-    sub_path = 'bank-account'
+    sub_path = "bank-account"

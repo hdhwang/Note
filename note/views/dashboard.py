@@ -7,11 +7,13 @@ from note.util.tokenHelper import get_user_token
 
 import logging
 import requests
+
 logger = logging.getLogger(__name__)
+
 
 # 대시보드
 class DashboardView(TemplateView):
-    template_name = 'note/dashboard.html'
+    template_name = "note/dashboard.html"
     context = {}
 
     def get(self, request, *args, **kwargs):
@@ -19,39 +21,47 @@ class DashboardView(TemplateView):
 
 
 class CountAPIView(View):
-    base_url = getattr(settings, 'API_BASE_URL')
-    sub_path = ''
+    base_url = getattr(settings, "API_BASE_URL")
+    sub_path = ""
 
     def get(self, request):
         try:
-            params = {'page_size': 1}
-            headers = {'Authorization': f'Token {get_user_token(request)}', 'Content-Type': 'application/json'}
-            response = requests.get(f'{self.base_url}/{self.sub_path}', params=params, headers=headers, verify=False)
+            params = {"page_size": 1}
+            headers = {
+                "Authorization": f"Token {get_user_token(request)}",
+                "Content-Type": "application/json",
+            }
+            response = requests.get(
+                f"{self.base_url}/{self.sub_path}",
+                params=params,
+                headers=headers,
+                verify=False,
+            )
             if response.status_code == 200 and response.json():
-                count = response.json().get('count')
+                count = response.json().get("count")
 
-            return JsonResponse({'count': count})
+            return JsonResponse({"count": count})
 
         except Exception as e:
-            logger.warning(f'[CountAPI - get] {to_str(e)}')
+            logger.warning(f"[CountAPI - get] {to_str(e)}")
             return HttpResponse(status=400)
 
 
 # 계좌번호 수 조회
 class BankAccountCntAPI(CountAPIView):
-    sub_path = 'bank-account'
+    sub_path = "bank-account"
 
 
 # 시리얼 번호 수 조회
 class SerialCntAPI(CountAPIView):
-    sub_path = 'serial'
+    sub_path = "serial"
 
 
 # 노트 수 조회
 class NoteCntAPI(CountAPIView):
-    sub_path = 'note'
+    sub_path = "note"
 
 
 # 결혼식 방명록 조회
 class GuestBookCntAPI(CountAPIView):
-    sub_path = 'guest-book'
+    sub_path = "guest-book"
