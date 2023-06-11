@@ -1,9 +1,10 @@
 from django.views.generic import TemplateView
 from note.views.views import TableAPIView
 
+
 # 노트
 class NoteView(TemplateView):
-    template_name = 'note/note.html'
+    template_name = "note/note.html"
     context = {}
 
     def get(self, request, *args, **kwargs):
@@ -11,4 +12,4 @@ class NoteView(TemplateView):
 
 
 class NoteAPI(TableAPIView):
-    sub_path = 'note'
+    sub_path = "note"
