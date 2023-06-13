@@ -1,7 +1,6 @@
 from django.conf import settings
 from django.http import JsonResponse, HttpResponse
 from django.views.generic import TemplateView, View
-from note import models
 from note.util.formatHelper import *
 from note.util.tokenHelper import get_user_token
 

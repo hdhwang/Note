@@ -15,7 +15,7 @@ function getBankAccountCount() {
     axios.get(baseUrl + 'bank-account').then(function (response) {
         checkRedirectLoginPage(response, $(location).attr('pathname'));  //로그인 페이지 리다이렉트 여부 확인
 
-        if (response.data && response.data.count) {
+        if (response.data && response.data.count >= 0) {
             const count = response.data.count;
             $('#bank-account').html(numberWithComma(count));
 
@@ -31,7 +31,7 @@ function getSerialCount() {
     axios.get(baseUrl + 'serial').then(function (response) {
         checkRedirectLoginPage(response, $(location).attr('pathname'));  //로그인 페이지 리다이렉트 여부 확인
 
-        if (response.data && response.data.count) {
+        if (response.data && response.data.count >= 0) {
             const count = response.data.count;
             $('#serial').html(numberWithComma(count));
             $('#serial-overlay').hide();
@@ -46,7 +46,7 @@ function getNoteCount() {
     axios.get(baseUrl + 'note').then(function (response) {
         checkRedirectLoginPage(response, $(location).attr('pathname'));  //로그인 페이지 리다이렉트 여부 확인
 
-        if (response.data && response.data.count) {
+        if (response.data && response.data.count >= 0) {
             const count = response.data.count;
             $('#note').html(numberWithComma(count));
             $('#note-overlay').hide();
@@ -61,7 +61,7 @@ function getGuestBookCount() {
     axios.get(baseUrl + 'guest-book').then(function (response) {
         checkRedirectLoginPage(response, $(location).attr('pathname'));  //로그인 페이지 리다이렉트 여부 확인
 
-        if (response.data && response.data.count) {
+        if (response.data && response.data.count >= 0) {
             const count = response.data.count;
             $('#guest-book').html(numberWithComma(count));
             $('#guest-book-overlay').hide();
