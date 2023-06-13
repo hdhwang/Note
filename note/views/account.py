@@ -330,7 +330,7 @@ class UsersAPI(View):
                 data.groups.clear()
 
                 # 사용자 그룹 추가
-                group_name = "Admin" if is_superuser == 1 else "User"
+                group_name = "관리자" if is_superuser == 1 else "사용자"
                 group = Group.objects.get(name=group_name)
                 group.user_set.add(data)
                 group.save()

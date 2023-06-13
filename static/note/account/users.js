@@ -399,6 +399,7 @@ function editData(id, param) {
 
         })
         .then(function (response) {
+            console.log(response);
             if (response && response.status == 204) {
                 toastr.success('사용자 편집에 성공하였습니다.');
                 reloadTable();
