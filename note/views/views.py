@@ -28,7 +28,7 @@ class IndexView(TemplateView):
                 return HttpResponseRedirect("/dashboard")
 
             # 토큰이 만료된 경우 토큰 refresh 수행
-            elif verify_response.status_code == 401 and refresh:
+            elif verify_response.status_code == 401:
                 refresh_token_response = refresh_token(kwargs.get('refresh_token'))
 
                 if refresh_token_response.status_code == 200:
