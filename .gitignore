@@ -14,3 +14,4 @@ __pycache__/
 
  # Secret information files #
 KMS.json
+db.sqlite3

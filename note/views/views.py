@@ -37,7 +37,7 @@ class IndexView(TemplateView):
             
             # 유효한 토큰이 존재하는 경우 대시보드로 이동
             if token_verify_response.status_code == 200:
-                return HttpResponseRedirect("/")
+                return HttpResponseRedirect("/dashboard")
 
             # 토큰이 만료된 경우 토큰 refresh 수행
             elif token_verify_response.status_code == 401 and refresh_token:
@@ -45,7 +45,7 @@ class IndexView(TemplateView):
                 refresh_token_response = requests.post(f"{self.jwt_base_url}/refresh", data=json.dumps(token_refresh_data), headers=headers, verify=False)
 
                 if refresh_token_response.status_code == 200:
-                    response = HttpResponseRedirect("/")
+                    response = HttpResponseRedirect("/dashboard")
                     response.set_cookie('access', refresh_token_response.json().get('access'))
                     response.set_cookie('refresh', refresh_token_response.json().get('refresh'))
                     return response
