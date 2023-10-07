@@ -13,8 +13,6 @@ const interval = 5000;
 
 function getBankAccountCount() {
     axios.get(baseUrl + 'bank-account').then(function (response) {
-        checkRedirectLoginPage(response, $(location).attr('pathname'));  //로그인 페이지 리다이렉트 여부 확인
-
         if (response.data && response.data.count >= 0) {
             const count = response.data.count;
             $('#bank-account').html(numberWithComma(count));
@@ -22,21 +20,26 @@ function getBankAccountCount() {
             $('#bank-account-overlay').hide();
         }
     }).catch(function (error) {
+        checkRedirectLoginPage(error, $(location).attr('pathname'));  //로그인 페이지 리다이렉트 여부 확인
+
         $('#bank-account').html(errMsg);
         $('#bank-account-overlay').hide();
+        if (error.indexOf('Request failed with status code 401') > -1 ){
+
+        }
     });
 }
 
 function getSerialCount() {
     axios.get(baseUrl + 'serial').then(function (response) {
-        checkRedirectLoginPage(response, $(location).attr('pathname'));  //로그인 페이지 리다이렉트 여부 확인
-
         if (response.data && response.data.count >= 0) {
             const count = response.data.count;
             $('#serial').html(numberWithComma(count));
             $('#serial-overlay').hide();
         }
     }).catch(function (error) {
+        checkRedirectLoginPage(error, $(location).attr('pathname'));  //로그인 페이지 리다이렉트 여부 확인
+
         $('#serial').html(errMsg);
         $('#serial-overlay').hide();
     });
@@ -44,14 +47,14 @@ function getSerialCount() {
 
 function getNoteCount() {
     axios.get(baseUrl + 'note').then(function (response) {
-        checkRedirectLoginPage(response, $(location).attr('pathname'));  //로그인 페이지 리다이렉트 여부 확인
-
         if (response.data && response.data.count >= 0) {
             const count = response.data.count;
             $('#note').html(numberWithComma(count));
             $('#note-overlay').hide();
         }
     }).catch(function (error) {
+        checkRedirectLoginPage(error, $(location).attr('pathname'));  //로그인 페이지 리다이렉트 여부 확인
+
         $('#note').html(errMsg);
         $('#note-overlay').hide();
     });
@@ -59,14 +62,14 @@ function getNoteCount() {
 
 function getGuestBookCount() {
     axios.get(baseUrl + 'guest-book').then(function (response) {
-        checkRedirectLoginPage(response, $(location).attr('pathname'));  //로그인 페이지 리다이렉트 여부 확인
-
         if (response.data && response.data.count >= 0) {
             const count = response.data.count;
             $('#guest-book').html(numberWithComma(count));
             $('#guest-book-overlay').hide();
         }
     }).catch(function (error) {
+        checkRedirectLoginPage(error, $(location).attr('pathname'));  //로그인 페이지 리다이렉트 여부 확인
+
         $('#guest-book').html(errMsg);
         $('#guest-book-overlay').hide();
     });

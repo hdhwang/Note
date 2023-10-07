@@ -9,15 +9,15 @@ function loginClickEvent() {
 
     else {
         let param = new FormData();
-        param.append('user-id', $('#user-id').val());
-        param.append('user-password', $('#user-password').val());
-        param.append('user-confirm', 'N');
+        param.append('username', $('#user-id').val());
+        param.append('password', $('#user-password').val());
 
         tryLogin(param);
     }
 }
 
 function tryLogin(param) {
+    const errMsg = '아이디 또는 비밀번호가 일치하지 않습니다.';
     axios(
         {
             method: 'POST',
@@ -25,52 +25,20 @@ function tryLogin(param) {
             data: param,
         })
         .then(function (response) {
-            if (response) {
-                //계정이 일정 시간동안 잠긴 경우
-                if (response.request && response.request.responseURL && response.request.responseURL.toString().indexOf('/error_login') > -1) {
-                    window.location = response.request.responseURL;
-                }
+            if (response && response.status == 200) {
+                // 토큰을 쿠키에 저장
+                setCookie('access', response.data.access);
+                setCookie('refresh', response.data.refresh);
 
-                else if (response.data) {
-                    //로그인에 성공한 경우
-                    if (response.data.data == 1) {
-                        window.location = window.location.origin + $('#next').val();
-                    }
-
-                    //기존 세션이 존재하는 경우
-                    else if (response.data.data == 2) {
-                        showConfirmModal('확인', '현재 접속 중인 계정입니다. 접속을 종료하고 로그인 하시겠습니까?',
-                            function (result) {
-                                if (result === true) {
-                                    param.set('user-confirm', 'Y');
-                                    tryLogin(param);
-                                }
-                            }
-                        );
-                    }
-
-                    //비활성 계정인 경우
-                    else if (response.data.data == -1) {
-                        showModal("알림", "비활성 계정입니다. 관리자에게 문의하시기 바랍니다.");
-                    }
-
-                    //로그인에 실패한 경우
-                    else {
-                        showModal("알림", "아이디 또는 비밀번호가 일치하지 않습니다.");
-                    }
-                }
-
-                else {
-                    showModal('알림', '로그인에 실패하였습니다.');
-                }
+                window.location = window.location.origin + $('#next').val();
             }
 
             else {
-                showModal('알림', '로그인에 실패하였습니다.');
+                showModal('알림', errMsg);
             }
         })
         .catch(function (error) {
-            showModal('알림', '로그인에 실패하였습니다.');
+            showModal('알림', errMsg);
             // console.log(error);
         });
 }
@@ -79,10 +47,6 @@ $(function () {
     // CSRF 토큰을 쿠키가 아닌 base.html의 djagno 변수에서 조회
     const csrfToken = $('[name=csrfmiddlewaretoken]').val();
     axios.defaults.headers.common['X-CSRFToken'] = csrfToken;
-
-    if ($(location).attr('href').indexOf('?next=') > -1) {
-        showModal('알림', '세션 정보가 만료되었습니다. 다시 로그인해 주십시오.');
-    }
 
     // 저장된 쿠키값을 가져와서 아이디 칸에 넣어준다. 없으면 공백으로 들어감.
     let key = getCookie('key');

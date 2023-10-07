@@ -13,7 +13,7 @@ class AuditLogView(TemplateView):
 
 
 class AuditLogAPI(TableAPIView):
-    sub_path = "audit-log"
+    api_sub_path = "audit-log"
 
     def post(self, request):
         HttpResponse(status=405)

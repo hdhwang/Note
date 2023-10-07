@@ -1,153 +1,91 @@
-from axes.models import AccessAttempt
 from django.shortcuts import HttpResponseRedirect, render
-from django.contrib.auth.models import User
-from django.contrib.auth.hashers import check_password
-from django.contrib import auth
 from django.http import JsonResponse, HttpResponse
 from django.http.multipartparser import MultiPartParser
-from django.contrib.auth.views import LogoutView
-from django.contrib.auth import logout as auth_logout
-from django.contrib.sessions.models import Session
-from django.contrib.auth import authenticate
 from django.conf import settings
 from django.views.generic import TemplateView, View
-from note.util.dicHelper import get_dic_value
-from note.util.formatHelper import *
-from note.util.logHelper import insert_audit_log
-from note.util.networkHelper import get_client_ip
-from note.util.regexHelper import *
-from note.util.tokenHelper import get_user_token
 
 
+import json
 import logging
 import math
+import re
 import requests
-import json
 
 logger = logging.getLogger(__name__)
+table_filter_regex = re.compile("filter\[[0-9]{1,3}\]\[value\]")
 
+def get_access_token(request):
+    return request.COOKIES.get('access')
+
+def get_refresh_token(request):
+    return request.COOKIES.get('refresh')
 
 class IndexView(TemplateView):
     template_name = "note/index.html"
     context = {}
+    jwt_base_url = getattr(settings, "JWT_BASE_URL")
 
     def get(self, request, *args, **kwargs):
-        # 로그인 세션이 존재하는 경우 대시보드로 이동
-        if request.user.is_authenticated:
-            return HttpResponseRedirect("/dashboard")
+        access_token = get_access_token(request)
+        refresh_token = get_refresh_token(request)
+        if access_token:
+            data = {'token': access_token}
+            headers = {
+                "Content-Type": "application/json",
+            }
+            token_verify_response = requests.post(f"{self.jwt_base_url}/verify", data=json.dumps(data), headers=headers, verify=False)
+            
+            # 유효한 토큰이 존재하는 경우 대시보드로 이동
+            if token_verify_response.status_code == 200:
+                return HttpResponseRedirect("/")
+
+            # 토큰이 만료된 경우 토큰 refresh 수행
+            elif token_verify_response.status_code == 401 and refresh_token:
+                token_refresh_data = {'refresh': refresh_token}
+                refresh_token_response = requests.post(f"{self.jwt_base_url}/refresh", data=json.dumps(token_refresh_data), headers=headers, verify=False)
+
+                if refresh_token_response.status_code == 200:
+                    response = HttpResponseRedirect("/")
+                    response.set_cookie('access', refresh_token_response.json().get('access'))
+                    response.set_cookie('refresh', refresh_token_response.json().get('refresh'))
+                    return response
 
         return self.render_to_response(self.context)
 
 
 # 로그인
-class NoteLoginView(View):
-    # 비밀번호 카운트 초기화 수행 (IP 기준)
-    def axes_reset_by_ip(self, request):
-        for obj in AccessAttempt.objects.all():
-            if obj.ip_address == get_client_ip(request):
-                obj.delete()
+class LoginView(View):
+    jwt_base_url = getattr(settings, "JWT_BASE_URL")
 
     def post(self, request):
         try:
-            username = get_dic_value(request.POST, "user-id")
-            password = get_dic_value(request.POST, "user-password")
+            data = {}
 
-            # 일치하는 사용자 계정이 존재하는 경우
-            if User.objects.values().filter(username=username) and check_password(
-                password, User.objects.get(username=username).password
-            ):
-                # 활성 계정인 경우 사용자 인증 수행
-                if User.objects.get(username=username).is_active:
-                    user = authenticate(request, username=username, password=password)
-
-                    # 사용자 인증에 성공한 경우
-                    if user is not None:
-                        sessions_list = Session.objects.all()
-
-                        for session in sessions_list:
-                            # 사용자 세션이 존재하는 경우
-                            if session.get_decoded().get("_auth_user_id") == to_str(
-                                user.id
-                            ):
-                                user_confirm = get_dic_value(
-                                    request.POST, "user-confirm", "N"
-                                )
-
-                                # 만료된 세션이거나 사용자가 컨펌 모달에서 확인을 클릭한 경우
-                                if (
-                                    session.expire_date < datetime.now()
-                                    or user_confirm.upper() == "Y"
-                                ):
-                                    session.delete()
-
-                                # 사용자 확인이 필요한 경우 리턴
-                                elif user_confirm.upper() == "N":
-                                    return JsonResponse({"data": 2})
-
-                        # 로그인 수행
-                        auth.login(request, user)
-
-                        # 로그인 성공 감사 로그 기록
-                        insert_audit_log(
-                            user.username, request, "계정", "로그인", "사용자 로그인", True
-                        )
-                        return JsonResponse({"data": 1})
-
-                    # 사용자 인증에 실패한 경우
-                    else:
-                        action = f"아이디 또는 비밀번호 불일치 (아이디 : {username})"
-                        insert_audit_log(None, request, "계정", "로그인", action, False)
-
-                        return JsonResponse({"data": 0})
-
-                # 비활성 계정인 경우
-                else:
-                    action = f"비활성 계정 로그인 시도 (아이디 : {username})"
-                    insert_audit_log(None, request, "계정", "로그인", action, False)
-
-                    # 비밀번호 카운트 초기화 수행 (IP 기준)
-                    self.axes_reset_by_ip(request)
-
-                    return JsonResponse({"data": -1})
-
-            # 일치하는 사용자 계정이 존재하지 않는 경우
-            else:
-                action = f"아이디 또는 비밀번호 불일치 (아이디 : {username})"
-                insert_audit_log(None, request, "계정", "로그인", action, False)
-
-                # 비밀번호 카운트 증가를 위해 인증 시도
-                authenticate(request, username=username, password=password)
-
-                return JsonResponse({"data": 0})
+            for key, value in request.POST.items():
+                data[key] = value
+            
+            headers = {
+                "Content-Type": "application/json",
+            }
+            response = requests.post(f"{self.jwt_base_url}", data=json.dumps(data), headers=headers, verify=False)
+            return JsonResponse(response.json(), status=response.status_code)
 
         except Exception as e:
-            logger.warning(f"[login] {to_str(e)}")
+            logger.warning(f"[LoginView - post] {str(e)}")
             return HttpResponse(status=400)
 
-
 # 로그아웃
-class NoteLogoutView(LogoutView):
-    def dispatch(self, request, *args, **kwargs):
-        user = request.user.username
-        auth_logout(request)
-
-        # 로그아웃 감사 로그 기록
-        insert_audit_log(user, request, "계정", "로그아웃", "사용자 로그아웃", True)
-
-        next_page = self.get_next_page()
-        if next_page:
-            # Redirect to this page until the session has been cleared.
-            return HttpResponseRedirect(next_page)
-        return super().dispatch(request, *args, **kwargs)
-
-
-class ErrorLoginView(View):
+class LogoutView(View):
     def get(self, request):
-        fail_limit = getattr(settings, "AXES_FAILURE_LIMIT")
-        cool_times = to_int(getattr(settings, "AXES_COOLOFF_TIME").seconds / 60)
-        msg = f"로그인 {fail_limit}회 이상 실패로 {cool_times}분간 로그인할 수 없습니다."
+        try:
+            response = HttpResponseRedirect("/")
+            response.delete_cookie('access')
+            response.delete_cookie('refresh')
+            return response
 
-        return error_401(request, msg)
+        except Exception as e:
+            logger.warning(f"[LogoutView - get] {str(e)}")
+            return HttpResponse(status=400)
 
 
 # HTTP 상태 코드 400
@@ -191,8 +129,7 @@ def error_500(request):
 
 class DataTablesKoreanView(View):
     def get(self, request):
-        s_length_menu = get_dic_value(request.GET, "s-length-menu", "페이지당 줄수")
-
+        s_length_menu = request.GET.get("s-length-menu", "페이지당 줄수")
         response = {
             "sEmptyTable": "데이터가 없습니다.",
             "sInfo": "_START_ - _END_ / _TOTAL_",
@@ -218,8 +155,9 @@ class DataTablesKoreanView(View):
 
 
 class TableAPIView(View):
-    base_url = getattr(settings, "API_BASE_URL")
-    sub_path = ""
+    jwt_base_url = getattr(settings, "JWT_BASE_URL")
+    api_base_url = getattr(settings, "API_BASE_URL")
+    api_sub_path = ""
 
     def get(self, request):
         try:
@@ -235,10 +173,10 @@ class TableAPIView(View):
                 value = param[1]
 
                 if key == "start":
-                    start = to_int(value) + 1
+                    start = int(value) + 1
 
-                elif key == "length" and to_int(value) > 0:
-                    page_size = to_int(value)
+                elif key == "length" and int(value) > 0:
+                    page_size = int(value)
 
                 # XSS 방지를 위한 파라미터
                 elif key == "draw":
@@ -253,7 +191,7 @@ class TableAPIView(View):
                 # 필터 설정
                 elif table_filter_regex.search(key) and value != "":
                     filter_key = f'{key.split("[value]")[0]}[data]'
-                    filter_name = get_dic_value(request.GET, filter_key)
+                    filter_name = request.GET.get(filter_key)
                     params[filter_name] = value
 
             if start > 0:
@@ -262,12 +200,17 @@ class TableAPIView(View):
             params["page"] = page
             params["page_size"] = page_size
 
+            access_token = get_access_token(request)
+            refresh_token = get_refresh_token(request)
+            if not access_token:
+                return HttpResponseRedirect("/")
+            
             headers = {
-                "Authorization": f"Token {get_user_token(request)}",
+                "Authorization": f"Bearer {access_token}",
                 "Content-Type": "application/json",
             }
             response = requests.get(
-                f"{self.base_url}/{self.sub_path}",
+                f"{self.api_base_url}/{self.api_sub_path}",
                 params=params,
                 headers=headers,
                 verify=False,
@@ -276,6 +219,36 @@ class TableAPIView(View):
                 data = response.json().get("results")
                 count = response.json().get("count")
 
+            # 토큰이 만료된 경우 토큰 refresh 수행
+            elif response.status_code == 401 and refresh_token:
+                token_refresh_data = {'refresh': refresh_token}
+                refresh_token_response = requests.post(f"{self.jwt_base_url}/refresh", data=json.dumps(token_refresh_data), headers=headers, verify=False)
+
+                if refresh_token_response.status_code == 200:
+                    response = requests.get(
+                        f"{self.api_base_url}/{self.api_sub_path}",
+                        params=params,
+                        headers=headers,
+                        verify=False,
+                    )
+                    if response.status_code == 200 and response.json():
+                        data = response.json().get("results")
+                        count = response.json().get("count")
+
+                        response = JsonResponse(
+                            {
+                                "draw": draw,
+                                "recordsTotal": count,
+                                "recordsFiltered": count,
+                                "data": data,
+                            }
+                        )
+                        response.set_cookie('access', refresh_token_response.json().get('access'))
+                        response.set_cookie('refresh', refresh_token_response.json().get('refresh'))
+                        return response
+                    else:
+                        return HttpResponseRedirect("/")
+                        
             return JsonResponse(
                 {
                     "draw": draw,
@@ -284,9 +257,8 @@ class TableAPIView(View):
                     "data": data,
                 }
             )
-
         except Exception as e:
-            logger.warning(f"[TableAPIView - get] {to_str(e)}")
+            logger.warning(f"[TableAPIView - get] {str(e)}")
             return HttpResponse(status=400)
 
     def post(self, request):
@@ -296,21 +268,45 @@ class TableAPIView(View):
             for key, value in request.POST.items():
                 data[key] = value
 
+            access_token = get_access_token(request)
+            refresh_token = get_refresh_token(request)
+            if not access_token:
+                return HttpResponseRedirect("/")
+
             headers = {
-                "Authorization": f"Token {get_user_token(request)}",
+                "Authorization": f"Bearer {access_token}",
                 "Content-Type": "application/json",
             }
             response = requests.post(
-                f"{self.base_url}/{self.sub_path}",
+                f"{self.api_base_url}/{self.api_sub_path}",
                 data=json.dumps(data),
                 headers=headers,
                 verify=False,
             )
 
+            # 토큰이 만료된 경우 토큰 refresh 수행
+            if response.status_code == 401 and refresh_token:
+                token_refresh_data = {'refresh': refresh_token}
+                refresh_token_response = requests.post(f"{self.jwt_base_url}/refresh", data=json.dumps(token_refresh_data), headers=headers, verify=False)
+
+                if refresh_token_response.status_code == 200:
+                    response = requests.post(
+                        f"{self.api_base_url}/{self.api_sub_path}",
+                        data=json.dumps(data),
+                        headers=headers,
+                        verify=False,
+                    )
+                    response = HttpResponse(status=response.status_code)
+                    response.set_cookie('access', refresh_token_response.json().get('access'))
+                    response.set_cookie('refresh', refresh_token_response.json().get('refresh'))
+                    return response
+                else:
+                    return HttpResponseRedirect("/")
+
             return HttpResponse(status=response.status_code)
 
         except Exception as e:
-            logger.warning(f"[TableAPIView - post] {to_str(e)}")
+            logger.warning(f"[TableAPIView - post] {str(e)}")
             return HttpResponse(status=400)
 
     def put(self, request, req_id):
@@ -325,38 +321,84 @@ class TableAPIView(View):
                 for key, value in put_data.items():
                     data[key] = value
 
+                access_token = get_access_token(request)
+                refresh_token = get_refresh_token(request)
+                if not access_token:
+                    return HttpResponseRedirect("/")
+
                 headers = {
-                    "Authorization": f"Token {get_user_token(request)}",
+                    "Authorization": f"Bearer {access_token}",
                     "Content-Type": "application/json",
                 }
                 response = requests.put(
-                    f"{self.base_url}/{self.sub_path}/{req_id}",
+                    f"{self.api_base_url}/{self.api_sub_path}/{req_id}",
                     data=json.dumps(data),
                     headers=headers,
                     verify=False,
                 )
 
+                # 토큰이 만료된 경우 토큰 refresh 수행
+                if response.status_code == 401 and refresh_token:
+                    token_refresh_data = {'refresh': refresh_token}
+                    refresh_token_response = requests.post(f"{self.jwt_base_url}/refresh", data=json.dumps(token_refresh_data), headers=headers, verify=False)
+
+                    if refresh_token_response.status_code == 200:
+                        response = requests.put(
+                            f"{self.api_base_url}/{self.api_sub_path}/{req_id}",
+                            data=json.dumps(data),
+                            headers=headers,
+                            verify=False,
+                        )
+                        response = HttpResponse(status=response.status_code)
+                        response.set_cookie('access', refresh_token_response.json().get('access'))
+                        response.set_cookie('refresh', refresh_token_response.json().get('refresh'))
+                        return response
+                    else:
+                        return HttpResponseRedirect("/")
+
                 return HttpResponse(status=response.status_code)
 
         except Exception as e:
-            logger.warning(f"[TableAPIView - put] {to_str(e)}")
+            logger.warning(f"[TableAPIView - put] {str(e)}")
             return HttpResponse(status=400)
 
     def delete(self, request, req_id):
         try:
             if req_id:
+                access_token = get_access_token(request)
+                refresh_token = get_refresh_token(request)
+                if not access_token:
+                    return HttpResponseRedirect("/")
+
                 headers = {
-                    "Authorization": f"Token {get_user_token(request)}",
+                    "Authorization": f"Bearer {access_token}",
                     "Content-Type": "application/json",
                 }
                 response = requests.delete(
-                    f"{self.base_url}/{self.sub_path}/{req_id}",
+                    f"{self.api_base_url}/{self.api_sub_path}/{req_id}",
                     headers=headers,
                     verify=False,
                 )
+                # 토큰이 만료된 경우 토큰 refresh 수행
+                if response.status_code == 401 and refresh_token:
+                    token_refresh_data = {'refresh': refresh_token}
+                    refresh_token_response = requests.post(f"{self.jwt_base_url}/refresh", data=json.dumps(token_refresh_data), headers=headers, verify=False)
+
+                    if refresh_token_response.status_code == 200:
+                        response = requests.delete(
+                            f"{self.api_base_url}/{self.api_sub_path}/{req_id}",
+                            headers=headers,
+                            verify=False,
+                        )
+                        response = HttpResponse(status=response.status_code)
+                        response.set_cookie('access', refresh_token_response.json().get('access'))
+                        response.set_cookie('refresh', refresh_token_response.json().get('refresh'))
+                        return response
+                    else:
+                        return HttpResponseRedirect("/")
 
                 return HttpResponse(status=response.status_code)
 
         except Exception as e:
-            logger.warning(f"[TableAPIView - delete] {to_str(e)}")
+            logger.warning(f"[TableAPIView - delete] {str(e)}")
             return HttpResponse(status=400)

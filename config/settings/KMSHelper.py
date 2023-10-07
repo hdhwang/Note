@@ -1,4 +1,3 @@
-from note.util.formatHelper import *
 import json
 import logging
 import os
@@ -23,7 +22,7 @@ def get_kms_value():
             result = response.json()["data"][0]["value"]
 
     except Exception as e:
-        logger.warning(f"[get_kms_value] {to_str(e)}")
+        logger.warning(f"[get_kms_value] {str(e)}")
 
     finally:
         return result
