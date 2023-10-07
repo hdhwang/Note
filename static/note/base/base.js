@@ -280,17 +280,6 @@ function numberWithComma(num) {
     return num.replace(/(\d)(?=(?:\d{3})+(?!\d))/g, '$1,');
 }
 
-//숫자 여부 판단
-function checkNumber(s) {
-    s += ''; // 문자열로 변환
-    s = s.replace(/^\s*|\s*$/g, ''); // 좌우 공백 제거
-    if (s == '' || isNaN(s)) {
-        return false;
-    }
-
-    return true;
-}
-
 //DateRangePicker 언어 설정 조회
 function getDateRangePickerLocale(format = 'YYYY-MM-DD HH:mm') {
     return {
@@ -349,166 +338,6 @@ function getDiffDateRange(dateRangePicker) {
     return (endDate - startDate) / 1000;
 }
 
-//Placeholder 설정
-function setPlaceholder(context, placeholder = '') {
-    context.prop('placeholder', placeholder);
-}
-
-//입력 최대 글자 수 설정
-function setMaxLength(context, maxLength = 1024) {
-    context.prop('maxlength', maxLength);
-}
-
-//키 입력 제한 설정
-function setKeyPress(context, type = '') {
-    context.off('keypress').on('keypress', function () {
-
-        //숫자 또는 휴대폰 입력인 경우
-        if (type == 'num' || type == 'mobile') {
-            checkNumberKey();
-        }
-
-        //다중 숫자 입력인 경우
-        else if (type == 'multiNum') {
-            checkMultiNumberKey();
-        }
-
-        //IP 입력인 경우
-        else if (type == 'ip') {
-            checkIPKey();
-        }
-
-        else {
-            checkAlphaNumSpecialKey();
-        }
-    });
-}
-
-//텍스트 박스에 숫자와 영문, 특수문자 입력 가능 설정
-function checkAlphaNumSpecialKey() {
-    const char = event.keyCode;
-
-    if (char != 13 && checkKey() < 1 || checkKey() > 3) {
-        event.returnValue = false;
-        return;
-    }
-}
-
-//텍스트 박스에 숫자만 입력 가능 설정
-function checkNumberKey() {
-    const char = event.keyCode;
-
-    if (char != 13 && checkKey() != 1) {
-        event.returnValue = false;
-        return;
-    }
-}
-
-//텍스트 박스에 숫자, 특수문자(,) 입력 가능 설정
-function checkMultiNumberKey() {
-    const char = event.keyCode;
-
-    if (char != 13 && !(char == 44 || (char >= 48 && char <= 57))) {
-        event.returnValue = false;
-        return;
-    }
-}
-
-//텍스트 박스에 숫자, 특수문자(.)만 입력 가능 설정
-function checkIPKey() {
-    const char = event.keyCode;
-
-    if (char != 13 && !(char == 46 || (char >= 48 && char <= 57))) {
-        event.returnValue = false;
-        return;
-    }
-}
-
-function checkKey() {
-    const char = event.keyCode;
-
-    //숫자
-    if (char >= 48 && char <= 57) {
-        return 1;
-    }
-
-    //영문
-    else if ((char >= 65 && char <= 90) || (char >= 97 && char <= 122)) {
-        return 2;
-    }
-
-    //특수기호
-    else if ((char >= 33 && char <= 47) || (char >= 58 && char <= 64)
-        || (char >= 91 && char <= 96) || (char >= 123 && char <= 126)) {
-        return 3;
-    }
-
-    //한글
-    else if ((char >= 12592) || (char <= 12687)) {
-        return 4;
-    }
-
-    else {
-        return -1;
-    }
-}
-
-//키 입력 이벤트 제거
-function removeKeyPress(context) {
-    context.off('keypress');
-}
-
-//입력 불가능한 키 입력 시 공백으로 치환
-function setKeyup(context, type = '', callbackFunc = null) {
-    const regNum = /[0-9]/g;
-    const regAlpha = /[A-Za-z]/g;
-    const regSpecial = /[\{\}\[\]\/?.,;:|\)*~`!^\-+<>@\#$%&\\\=\(\'\"]/gi;
-    const regHangul = /[ㄱ-ㅎ|ㅏ-ㅣ|가-힣]/g;
-
-    context.off('keyup').on('keyup', function (e) {
-        //숫자 입력인 경우 숫자를 제외한 모든 문자를 공백으로 치환
-        if (type == 'num') {
-            $(this).val($(this).val().replace(regAlpha, ''));
-            $(this).val($(this).val().replace(regSpecial, ''));
-        }
-
-        //다중 숫자 입력인 경우 숫자, 특수문자(,)를 제외한 모든 문자를 공백으로 치환
-        else if (type == 'multiNum') {
-            const regExp = /[\{\}\[\]\/?.;:|\)*~`!^\-+<>@\#$%&\\\=\(\'\"]/gi;
-
-            $(this).val($(this).val().replace(regAlpha, ''));
-            $(this).val($(this).val().replace(regExp, ''));
-        }
-
-        //휴대폰 입력인 경우 숫자를 제외한 모든 문자를 공백으로 치환
-        else if (type == 'mobile') {
-            $(this).val($(this).val().replace(regAlpha, ''));
-            $(this).val($(this).val().replace(regSpecial, ''));
-
-            //입력 값을 휴대폰 번호 형식으로 치환
-            $(this).val(setAutoHypenMobile($(this).val()));
-        }
-
-        //IP 입력인 경우 숫자, 특수문자(.)를 제외한 모든 문자를 공백으로 치환
-        else if (type == 'ip') {
-            const regExp = /[\{\}\[\]\/?,;:|\)*~`!^\-+<>@\#$%&\\\=\(\'\"]/gi;
-
-            $(this).val($(this).val().replace(regAlpha, ''));
-            $(this).val($(this).val().replace(regExp, ''));
-        }
-
-        if (type != 'ship-addr') {
-            //한글 입력을 공백으로 치환
-            $(this).val($(this).val().replace(regHangul, ''));
-        }
-
-        //엔터 버튼을 클릭한 경우
-        if (e.keyCode == 13 && callbackFunc != null) {
-            callbackFunc();
-        }
-    });
-}
-
 // 로그인 페이지 리다이렉트 체크
 function checkRedirectLoginPage(data, next = '') {
     let url = '/';
@@ -516,23 +345,19 @@ function checkRedirectLoginPage(data, next = '') {
         url += '?next=' + next;
     }
 
-    //DataTables ajax
     if (data == 'parsererror') {
         location.replace(url);
     }
-
-    //GET, POST 요청 시
     else if (data && data.request && data.request.responseURL && data.request.responseURL.indexOf('?next=') > -1) {
         location.replace(url);
     }
-
-    //PUT 요청 오류 시
-    else if (data.toString().indexOf('Error: Request failed with status code 500') > -1) {
+    else if (data.toString().indexOf('Error: Request failed with status code 401') > -1) {
         location.replace(url);
     }
-
-    //DELETE 요청 오류 시
     else if (data.toString().indexOf('Error: Request failed with status code 405') > -1) {
+        location.replace(url);
+    }
+    else if (data.toString().indexOf('Error: Request failed with status code 500') > -1) {
         location.replace(url);
     }
 }
@@ -568,87 +393,6 @@ function getHttpStatusMessage(status, item = '항목') {
     return msg;
 }
 
-// 통신비밀보호 > 데이터 조회 > 휴대폰 번호 입력 시 자동 하이픈 추가
-function setAutoHypenMobile(str) {
-    str = str.replace(/[^0-9]/g, '');
-    let tmp = '';
-
-    if (str.length < 4) {
-        return str;
-    }
-
-    else if (str.length < 7) {
-        tmp += str.substr(0, 3);
-        tmp += '-';
-        tmp += str.substr(3);
-
-        return tmp;
-    }
-    else if (str.length < 11) {
-        tmp += str.substr(0, 3);
-        tmp += '-';
-        tmp += str.substr(3, 3);
-        tmp += '-';
-        tmp += str.substr(6);
-
-        return tmp;
-    }
-
-    else {
-        tmp += str.substr(0, 3);
-        tmp += '-';
-        tmp += str.substr(3, 4);
-        tmp += '-';
-        tmp += str.substr(7);
-
-        return tmp;
-    }
-
-    return str;
-}
-
-//새 탭으로 열기
-function openInNewTab(url) {
-    let win = window.open(url, '_blank');
-    win.focus();
-}
-
-//오늘 일자 조회
-function getToday() {
-    let date = new Date();
-
-    let month = date.getMonth() + 1;
-    let day = date.getDate();
-
-    return date.getFullYear() + '-' + (month < 10 ? '0' : '') + month + '-' + (day < 10 ? '0' : '') + day;
-}
-
-//DataTables 필드 항목 콤마로 구분 후 데이터 축약
-function getDataTableEllipsis() {
-    return function (data, type, row) {
-        let splitData = data.split(',');
-        const printCnt = 2;             //화면에 출력할 데이터 수
-        let ellipsisData = '';          //화면 출력 수 초과 시 축약 데이터
-        let orgData = '';               //툴팁에 출력하기 위한 개행 처리된 원본 데이터
-
-        for (let i = 0; i < splitData.length; i++) {
-            orgData += (orgData.length > 0) ? '\n' + splitData[i] : splitData[i];
-
-            if (i < printCnt) {
-                ellipsisData += (ellipsisData.length > 0) ? '<br>' + splitData[i] : splitData[i];
-            }
-        }
-
-        if (splitData.length > printCnt) {
-            ellipsisData += '<br>외 ' + (splitData.length - printCnt) + ' 개';
-        }
-
-        let html = '<div data-toggle="tooltip" title="' + orgData + '">' + ellipsisData + '</div>';
-
-        return html;
-    }
-}
-
 //XSS 관련 html 코드 치환
 function escapeHtml(text) {
     if (text != null && text != undefined && typeof (text) == typeof '') {
@@ -663,39 +407,6 @@ function escapeHtml(text) {
     }
 
     return text
-}
-
-function setSidebarCookie() {
-    const cookieName = 'sidebar';
-    const cookieValue = 'sidebar-collapse';
-    let expireDate = 7;
-
-    // 저장된 쿠키값 조회
-    let cookie = getCookie(cookieName);
-
-    if (cookie === cookieName) {
-        deleteCookie(cookieName, true);
-    }
-
-    else {
-        setCookie(cookieName, cookieValue, expireDate, true); // 7일 동안 쿠키 보관
-    }
-}
-
-function changeSidebarStatus() {
-    const cookieName = 'sidebar';
-    const cookieValue = 'sidebar-collapse';
-
-    // 저장된 쿠키값 조회
-    let cookie = getCookie(cookieName);
-
-    if (cookie === cookieValue) {
-        $('#body').addClass(cookieValue);
-    }
-
-    else {
-        $('#body').removeClass(cookieValue);
-    }
 }
 
 function getDataTablesDom() {
@@ -724,18 +435,6 @@ function getDataTablesFilterColumns(data) {
     }
 
     return result;
-}
-
-//사용 불가 단어 검증
-function checkWordValidation(inputText) {
-    const arr = ['NONE'];
-    for (let i in arr) {
-        if (inputText.toUpperCase() == arr[i]) {
-            return false;
-        }
-    }
-
-    return true;
 }
 
 function checkJSONFormat(data) {

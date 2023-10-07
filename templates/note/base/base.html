@@ -53,9 +53,9 @@
                 <li class="nav-item d-none d-sm-inline-block">
                     <a href="{% url 'dashboard' %}" class="nav-link">홈</a>
                 </li>
-                <li class="nav-item d-none d-sm-inline-block">
+                {% comment %} <li class="nav-item d-none d-sm-inline-block">
                     <a href="{% url 'account' %}" class="nav-link">계정 관리</a>
-                </li>
+                </li> {% endcomment %}
                 <li class="nav-item d-none d-sm-inline-block">
                     <a href="#" class="nav-link" onclick="confirmLogout()">로그아웃</a>
                 </li>
@@ -132,7 +132,7 @@
                             </a>
                         </li>
 
-                        {% if request.user.is_superuser %}
+                        {% comment %} {% if request.user.is_superuser %}
                             <li class="nav-header">관리자 기능</li>
                             <li class="nav-item">
                                 <a href="{% url 'account_users' %}" class="nav-link {% block account_users %}{% endblock %}">
@@ -147,7 +147,7 @@
                                     <p>감사 로그</p>
                                 </a>
                             </li>
-                        {% endif %}
+                        {% endif %} {% endcomment %}
 
                         <li class="nav-item">
                             <a href="#" class="nav-link" onclick="confirmLogout()">

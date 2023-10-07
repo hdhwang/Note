@@ -12,4 +12,4 @@ class BankAccountView(TemplateView):
 
 
 class BankAccountAPI(TableAPIView):
-    sub_path = "bank-account"
+    api_sub_path = "bank-account"
