@@ -3,7 +3,7 @@ from django.http import JsonResponse, HttpResponse
 from django.http.multipartparser import MultiPartParser
 from django.conf import settings
 from django.views.generic import TemplateView, View
-
+from note.jwt.tokens import get_access_token, get_refresh_token, verify_token, get_token, refresh_token
 
 import json
 import logging
@@ -14,35 +14,22 @@ import requests
 logger = logging.getLogger(__name__)
 table_filter_regex = re.compile("filter\[[0-9]{1,3}\]\[value\]")
 
-def get_access_token(request):
-    return request.COOKIES.get('access')
-
-def get_refresh_token(request):
-    return request.COOKIES.get('refresh')
-
 class IndexView(TemplateView):
     template_name = "note/index.html"
     context = {}
-    jwt_base_url = getattr(settings, "JWT_BASE_URL")
 
-    def get(self, request, *args, **kwargs):
+    def get(self, request):
         access_token = get_access_token(request)
-        refresh_token = get_refresh_token(request)
         if access_token:
-            data = {'token': access_token}
-            headers = {
-                "Content-Type": "application/json",
-            }
-            token_verify_response = requests.post(f"{self.jwt_base_url}/verify", data=json.dumps(data), headers=headers, verify=False)
+            verify_response = verify_token(access_token)
             
             # 유효한 토큰이 존재하는 경우 대시보드로 이동
-            if token_verify_response.status_code == 200:
+            if verify_response.status_code == 200:
                 return HttpResponseRedirect("/dashboard")
 
             # 토큰이 만료된 경우 토큰 refresh 수행
-            elif token_verify_response.status_code == 401 and refresh_token:
-                token_refresh_data = {'refresh': refresh_token}
-                refresh_token_response = requests.post(f"{self.jwt_base_url}/refresh", data=json.dumps(token_refresh_data), headers=headers, verify=False)
+            elif verify_response.status_code == 401 and refresh:
+                refresh_token_response = refresh_token(kwargs.get('refresh_token'))
 
                 if refresh_token_response.status_code == 200:
                     response = HttpResponseRedirect("/dashboard")
@@ -55,19 +42,9 @@ class IndexView(TemplateView):
 
 # 로그인
 class LoginView(View):
-    jwt_base_url = getattr(settings, "JWT_BASE_URL")
-
     def post(self, request):
         try:
-            data = {}
-
-            for key, value in request.POST.items():
-                data[key] = value
-            
-            headers = {
-                "Content-Type": "application/json",
-            }
-            response = requests.post(f"{self.jwt_base_url}", data=json.dumps(data), headers=headers, verify=False)
+            response = get_token(request)
             return JsonResponse(response.json(), status=response.status_code)
 
         except Exception as e:
@@ -155,11 +132,10 @@ class DataTablesKoreanView(View):
 
 
 class TableAPIView(View):
-    jwt_base_url = getattr(settings, "JWT_BASE_URL")
-    api_base_url = getattr(settings, "API_BASE_URL")
-    api_sub_path = ""
+    base_url = getattr(settings, "API_BASE_URL")
+    sub_path = ""
 
-    def get(self, request):
+    def get(self, request, *args, **kwargs):
         try:
             params = {}
 
@@ -199,18 +175,12 @@ class TableAPIView(View):
 
             params["page"] = page
             params["page_size"] = page_size
-
-            access_token = get_access_token(request)
-            refresh_token = get_refresh_token(request)
-            if not access_token:
-                return HttpResponseRedirect("/")
-            
             headers = {
-                "Authorization": f"Bearer {access_token}",
+                "Authorization": f"Bearer {kwargs.get('access_token')}",
                 "Content-Type": "application/json",
             }
             response = requests.get(
-                f"{self.api_base_url}/{self.api_sub_path}",
+                f"{self.base_url}/{self.sub_path}",
                 params=params,
                 headers=headers,
                 verify=False,
@@ -220,13 +190,11 @@ class TableAPIView(View):
                 count = response.json().get("count")
 
             # 토큰이 만료된 경우 토큰 refresh 수행
-            elif response.status_code == 401 and refresh_token:
-                token_refresh_data = {'refresh': refresh_token}
-                refresh_token_response = requests.post(f"{self.jwt_base_url}/refresh", data=json.dumps(token_refresh_data), headers=headers, verify=False)
-
+            elif response.status_code == 401:
+                refresh_token_response = refresh_token(kwargs.get('refresh_token'))
                 if refresh_token_response.status_code == 200:
                     response = requests.get(
-                        f"{self.api_base_url}/{self.api_sub_path}",
+                        f"{self.base_url}/{self.sub_path}",
                         params=params,
                         headers=headers,
                         verify=False,
@@ -261,37 +229,30 @@ class TableAPIView(View):
             logger.warning(f"[TableAPIView - get] {str(e)}")
             return HttpResponse(status=400)
 
-    def post(self, request):
+    def post(self, request, *args, **kwargs):
         try:
             data = {}
 
             for key, value in request.POST.items():
                 data[key] = value
 
-            access_token = get_access_token(request)
-            refresh_token = get_refresh_token(request)
-            if not access_token:
-                return HttpResponseRedirect("/")
-
             headers = {
-                "Authorization": f"Bearer {access_token}",
+                "Authorization": f"Bearer {kwargs.get('access_token')}",
                 "Content-Type": "application/json",
             }
             response = requests.post(
-                f"{self.api_base_url}/{self.api_sub_path}",
+                f"{self.base_url}/{self.sub_path}",
                 data=json.dumps(data),
                 headers=headers,
                 verify=False,
             )
 
             # 토큰이 만료된 경우 토큰 refresh 수행
-            if response.status_code == 401 and refresh_token:
-                token_refresh_data = {'refresh': refresh_token}
-                refresh_token_response = requests.post(f"{self.jwt_base_url}/refresh", data=json.dumps(token_refresh_data), headers=headers, verify=False)
-
+            if response.status_code == 401:
+                refresh_token_response = refresh_token(kwargs.get('refresh_token'))
                 if refresh_token_response.status_code == 200:
                     response = requests.post(
-                        f"{self.api_base_url}/{self.api_sub_path}",
+                        f"{self.base_url}/{self.sub_path}",
                         data=json.dumps(data),
                         headers=headers,
                         verify=False,
@@ -309,7 +270,7 @@ class TableAPIView(View):
             logger.warning(f"[TableAPIView - post] {str(e)}")
             return HttpResponse(status=400)
 
-    def put(self, request, req_id):
+    def put(self, request, req_id, *args, **kwargs):
         try:
             if req_id:
                 # put data 파싱
@@ -321,30 +282,23 @@ class TableAPIView(View):
                 for key, value in put_data.items():
                     data[key] = value
 
-                access_token = get_access_token(request)
-                refresh_token = get_refresh_token(request)
-                if not access_token:
-                    return HttpResponseRedirect("/")
-
                 headers = {
-                    "Authorization": f"Bearer {access_token}",
+                    "Authorization": f"Bearer {kwargs.get('access_token')}",
                     "Content-Type": "application/json",
                 }
                 response = requests.put(
-                    f"{self.api_base_url}/{self.api_sub_path}/{req_id}",
+                    f"{self.base_url}/{self.sub_path}/{req_id}",
                     data=json.dumps(data),
                     headers=headers,
                     verify=False,
                 )
 
                 # 토큰이 만료된 경우 토큰 refresh 수행
-                if response.status_code == 401 and refresh_token:
-                    token_refresh_data = {'refresh': refresh_token}
-                    refresh_token_response = requests.post(f"{self.jwt_base_url}/refresh", data=json.dumps(token_refresh_data), headers=headers, verify=False)
-
+                if response.status_code == 401:
+                    refresh_token_response = refresh_token(kwargs.get('refresh_token'))
                     if refresh_token_response.status_code == 200:
                         response = requests.put(
-                            f"{self.api_base_url}/{self.api_sub_path}/{req_id}",
+                            f"{self.base_url}/{self.sub_path}/{req_id}",
                             data=json.dumps(data),
                             headers=headers,
                             verify=False,
@@ -362,31 +316,24 @@ class TableAPIView(View):
             logger.warning(f"[TableAPIView - put] {str(e)}")
             return HttpResponse(status=400)
 
-    def delete(self, request, req_id):
+    def delete(self, request, req_id, *args, **kwargs):
         try:
             if req_id:
-                access_token = get_access_token(request)
-                refresh_token = get_refresh_token(request)
-                if not access_token:
-                    return HttpResponseRedirect("/")
-
                 headers = {
-                    "Authorization": f"Bearer {access_token}",
+                    "Authorization": f"Bearer {kwargs.get('access_token')}",
                     "Content-Type": "application/json",
                 }
                 response = requests.delete(
-                    f"{self.api_base_url}/{self.api_sub_path}/{req_id}",
+                    f"{self.base_url}/{self.sub_path}/{req_id}",
                     headers=headers,
                     verify=False,
                 )
                 # 토큰이 만료된 경우 토큰 refresh 수행
-                if response.status_code == 401 and refresh_token:
-                    token_refresh_data = {'refresh': refresh_token}
-                    refresh_token_response = requests.post(f"{self.jwt_base_url}/refresh", data=json.dumps(token_refresh_data), headers=headers, verify=False)
-
+                if response.status_code == 401:
+                    refresh_token_response = refresh_token(kwargs.get('refresh_token'))
                     if refresh_token_response.status_code == 200:
                         response = requests.delete(
-                            f"{self.api_base_url}/{self.api_sub_path}/{req_id}",
+                            f"{self.base_url}/{self.sub_path}/{req_id}",
                             headers=headers,
                             verify=False,
                         )

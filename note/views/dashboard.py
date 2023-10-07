@@ -1,7 +1,7 @@
 from django.conf import settings
 from django.http import JsonResponse, HttpResponse
 from django.views.generic import TemplateView, View
-from note.views.views import get_access_token, get_refresh_token
+from note.jwt.tokens import get_access_token, get_refresh_token, refresh_token
 
 import logging
 import requests
@@ -19,24 +19,18 @@ class DashboardView(TemplateView):
 
 
 class CountAPIView(View):
-    jwt_base_url = getattr(settings, "JWT_BASE_URL")
-    api_base_url = getattr(settings, "API_BASE_URL")
-    api_sub_path = ""
+    base_url = getattr(settings, "API_BASE_URL")
+    sub_path = ""
 
-    def get(self, request):
+    def get(self, request, *args, **kwargs):
         try:
-            access_token = get_access_token(request)
-            refresh_token = get_refresh_token(request)
-            if not access_token:
-                return HttpResponse(status=401)
-
             headers = {
-                "Authorization": f"Bearer {access_token}",
+                "Authorization": f"Bearer {kwargs.get('access_token')}",
                 "Content-Type": "application/json",
             }
             params = {"page_size": 1}
             response = requests.get(
-                f"{self.api_base_url}/{self.api_sub_path}",
+                f"{self.base_url}/{self.sub_path}",
                 params=params,
                 headers=headers,
                 verify=False,
@@ -46,17 +40,13 @@ class CountAPIView(View):
                 return JsonResponse({"count": count})
                 
             # 토큰이 만료된 경우 토큰 refresh 수행
-            elif response.status_code == 401 and refresh_token:
-                data = {'refresh': refresh_token}
-                response = requests.post(f"{self.jwt_base_url}/refresh", data=json.dumps(data), headers=headers, verify=False)
+            elif response.status_code == 401:
+                refresh_token_response = refresh_token(kwargs.get('refresh_token'))
 
-                if response.status_code == 200:
-                    access = response.json().get('access')
-                    refresh = response.json().get('refresh')
-                    
+                if refresh_token_response.status_code == 200:
                     response = JsonResponse({"count": count})
-                    response.set_cookie('access', access)
-                    response.set_cookie('refresh', refresh)
+                    response.set_cookie('access', refresh_token_response.json().get('access'))
+                    response.set_cookie('refresh', refresh_token_response.json().get('refresh'))
                     return response
                 else:
                     return HttpResponse(status=response.status_code)
@@ -70,19 +60,19 @@ class CountAPIView(View):
 
 # 계좌번호 수 조회
 class BankAccountCntAPI(CountAPIView):
-    api_sub_path = "bank-account"
+    sub_path = "bank-account"
 
 
 # 시리얼 번호 수 조회
 class SerialCntAPI(CountAPIView):
-    api_sub_path = "serial"
+    sub_path = "serial"
 
 
 # 노트 수 조회
 class NoteCntAPI(CountAPIView):
-    api_sub_path = "note"
+    sub_path = "note"
 
 
 # 결혼식 방명록 조회
 class GuestBookCntAPI(CountAPIView):
-    api_sub_path = "guest-book"
+    sub_path = "guest-book"

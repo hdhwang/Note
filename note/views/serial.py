@@ -12,4 +12,4 @@ class SerialView(TemplateView):
 
 
 class SerialAPI(TableAPIView):
-    api_sub_path = "serial"
+    sub_path = "serial"

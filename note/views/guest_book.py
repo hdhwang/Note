@@ -12,4 +12,4 @@ class GuestBookView(TemplateView):
 
 
 class GuestBookAPI(TableAPIView):
-    api_sub_path = "guest-book"
+    sub_path = "guest-book"
