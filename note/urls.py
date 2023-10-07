@@ -1,5 +1,6 @@
 from django.urls import path
 from django.views.generic.base import RedirectView
+from note.jwt.decorators import jwt_decorator
 
 from note.views import (
     views,
@@ -30,37 +31,37 @@ urlpatterns = [
     path("data-tables/korean", views.DataTablesKoreanView.as_view()),
     
     # 대시보드
-    path("dashboard", dashboard.DashboardView.as_view(), name="dashboard"),
-    path("dashboard/api/bank-account", dashboard.BankAccountCntAPI.as_view()),
-    path("dashboard/api/serial", dashboard.SerialCntAPI.as_view()),
-    path("dashboard/api/note", dashboard.NoteCntAPI.as_view()),
-    path("dashboard/api/guest-book", dashboard.GuestBookCntAPI.as_view()),
+    path("dashboard", jwt_decorator(dashboard.DashboardView.as_view()), name="dashboard"),
+    path("dashboard/api/bank-account", jwt_decorator(dashboard.BankAccountCntAPI.as_view())),
+    path("dashboard/api/serial", jwt_decorator(dashboard.SerialCntAPI.as_view())),
+    path("dashboard/api/note", jwt_decorator(dashboard.NoteCntAPI.as_view())),
+    path("dashboard/api/guest-book", jwt_decorator(dashboard.GuestBookCntAPI.as_view())),
     
     # 계좌번호 관리
-    path("bank-account", bank_account.BankAccountView.as_view(), name="bank_account"),
-    path("bank-account/api", bank_account.BankAccountAPI.as_view()),
-    path("bank-account/api/<int:req_id>", bank_account.BankAccountAPI.as_view()),
+    path("bank-account", jwt_decorator(bank_account.BankAccountView.as_view()), name="bank_account"),
+    path("bank-account/api", jwt_decorator(bank_account.BankAccountAPI.as_view())),
+    path("bank-account/api/<int:req_id>", jwt_decorator(bank_account.BankAccountAPI.as_view())),
     
     # 시리얼 번호 관리
-    path("serial", serial.SerialView.as_view(), name="serial"),
-    path("serial/api", serial.SerialAPI.as_view()),
-    path("serial/api/<int:req_id>", serial.SerialAPI.as_view()),
+    path("serial", jwt_decorator(serial.SerialView.as_view()), name="serial"),
+    path("serial/api", jwt_decorator(serial.SerialAPI.as_view())),
+    path("serial/api/<int:req_id>", jwt_decorator(serial.SerialAPI.as_view())),
     
     # 노트 관리
-    path("note", note.NoteView.as_view(), name="note"),
-    path("note/api", note.NoteAPI.as_view()),
-    path("note/api/<int:req_id>", note.NoteAPI.as_view()),
+    path("note", jwt_decorator(note.NoteView.as_view()), name="note"),
+    path("note/api", jwt_decorator(note.NoteAPI.as_view())),
+    path("note/api/<int:req_id>", jwt_decorator(note.NoteAPI.as_view())),
     
     # 결혼식 방명록
-    path("guest-book", guest_book.GuestBookView.as_view(), name="guest_book"),
-    path("guest-book/api", guest_book.GuestBookAPI.as_view()),
-    path("guest-book/api/<int:req_id>", guest_book.GuestBookAPI.as_view()),
+    path("guest-book", jwt_decorator(guest_book.GuestBookView.as_view()), name="guest_book"),
+    path("guest-book/api", jwt_decorator(guest_book.GuestBookAPI.as_view())),
+    path("guest-book/api/<int:req_id>", jwt_decorator(guest_book.GuestBookAPI.as_view())),
     
     # 로또 생성기
-    path("lotto", lotto.LottoView.as_view(), name="lotto"),
-    path("lotto/api", lotto.LottoAPI.as_view()),
+    path("lotto", jwt_decorator(lotto.LottoView.as_view()), name="lotto"),
+    path("lotto/api", jwt_decorator(lotto.LottoAPI.as_view())),
     
     # 감사 로그
-    path("audit-log", audit_log.AuditLogView.as_view(), name="audit_log"),
-    path("audit-log/api", audit_log.AuditLogAPI.as_view()),
+    path("audit-log", jwt_decorator(audit_log.AuditLogView.as_view()), name="audit_log"),
+    path("audit-log/api", jwt_decorator(audit_log.AuditLogAPI.as_view())),
 ]

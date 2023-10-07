@@ -12,4 +12,4 @@ class NoteView(TemplateView):
 
 
 class NoteAPI(TableAPIView):
-    api_sub_path = "note"
+    sub_path = "note"

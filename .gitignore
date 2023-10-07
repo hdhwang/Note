@@ -9,9 +9,9 @@
 *.pyc
 __pycache__/
 
- # OS generated files #
- .DS_Store*
+# OS generated files #
+.DS_Store*
 
- # Secret information files #
+# Secret information files #
 KMS.json
 db.sqlite3
