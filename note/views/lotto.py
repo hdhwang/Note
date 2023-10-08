@@ -50,6 +50,9 @@ class LottoAPI(View):
             elif response.status_code == 401:
                 refresh_token_response = refresh_token(kwargs.get('refresh_token'))
                 if refresh_token_response.status_code == 200:
+                    access_token = refresh_token_response.json().get('access')
+                    refresh_token = refresh_token_response.json().get('refresh')
+                    headers["Authorization"] = f"Bearer {access_token}"
                     response = requests.get(f"{base_url}/{sub_path}", headers=headers, verify=False)
                     if response.status_code == 200 and response.json():
                         data = response.json().get("results")
@@ -63,8 +66,8 @@ class LottoAPI(View):
                                 "data": data,
                             }
                         )
-                        response.set_cookie('access', refresh_token_response.json().get('access'))
-                        response.set_cookie('refresh', refresh_token_response.json().get('refresh'))
+                        response.set_cookie('access', access_token)
+                        response.set_cookie('refresh', refresh_token)
                         return response
                 else:
                     return HttpResponseRedirect("/")

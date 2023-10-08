@@ -193,6 +193,9 @@ class TableAPIView(View):
             elif response.status_code == 401:
                 refresh_token_response = refresh_token(kwargs.get('refresh_token'))
                 if refresh_token_response.status_code == 200:
+                    access_token = refresh_token_response.json().get('access')
+                    refresh_token = refresh_token_response.json().get('refresh')
+                    headers["Authorization"] = f"Bearer {access_token}"
                     response = requests.get(
                         f"{self.base_url}/{self.sub_path}",
                         params=params,
@@ -211,8 +214,8 @@ class TableAPIView(View):
                                 "data": data,
                             }
                         )
-                        response.set_cookie('access', refresh_token_response.json().get('access'))
-                        response.set_cookie('refresh', refresh_token_response.json().get('refresh'))
+                        response.set_cookie('access', access_token)
+                        response.set_cookie('refresh', refresh_token)
                         return response
                     else:
                         return HttpResponseRedirect("/")
@@ -251,6 +254,9 @@ class TableAPIView(View):
             if response.status_code == 401:
                 refresh_token_response = refresh_token(kwargs.get('refresh_token'))
                 if refresh_token_response.status_code == 200:
+                    access_token = refresh_token_response.json().get('access')
+                    refresh_token = refresh_token_response.json().get('refresh')
+                    headers["Authorization"] = f"Bearer {access_token}"
                     response = requests.post(
                         f"{self.base_url}/{self.sub_path}",
                         data=json.dumps(data),
@@ -258,8 +264,8 @@ class TableAPIView(View):
                         verify=False,
                     )
                     response = HttpResponse(status=response.status_code)
-                    response.set_cookie('access', refresh_token_response.json().get('access'))
-                    response.set_cookie('refresh', refresh_token_response.json().get('refresh'))
+                    response.set_cookie('access', access_token)
+                    response.set_cookie('refresh', refresh_token)
                     return response
                 else:
                     return HttpResponseRedirect("/")
@@ -297,6 +303,9 @@ class TableAPIView(View):
                 if response.status_code == 401:
                     refresh_token_response = refresh_token(kwargs.get('refresh_token'))
                     if refresh_token_response.status_code == 200:
+                        access_token = refresh_token_response.json().get('access')
+                        refresh_token = refresh_token_response.json().get('refresh')
+                        headers["Authorization"] = f"Bearer {access_token}"
                         response = requests.put(
                             f"{self.base_url}/{self.sub_path}/{req_id}",
                             data=json.dumps(data),
@@ -304,8 +313,8 @@ class TableAPIView(View):
                             verify=False,
                         )
                         response = HttpResponse(status=response.status_code)
-                        response.set_cookie('access', refresh_token_response.json().get('access'))
-                        response.set_cookie('refresh', refresh_token_response.json().get('refresh'))
+                        response.set_cookie('access', access_token)
+                        response.set_cookie('refresh', refresh_token)
                         return response
                     else:
                         return HttpResponseRedirect("/")
@@ -332,14 +341,17 @@ class TableAPIView(View):
                 if response.status_code == 401:
                     refresh_token_response = refresh_token(kwargs.get('refresh_token'))
                     if refresh_token_response.status_code == 200:
+                        access_token = refresh_token_response.json().get('access')
+                        refresh_token = refresh_token_response.json().get('refresh')
+                        headers["Authorization"] = f"Bearer {access_token}"
                         response = requests.delete(
                             f"{self.base_url}/{self.sub_path}/{req_id}",
                             headers=headers,
                             verify=False,
                         )
                         response = HttpResponse(status=response.status_code)
-                        response.set_cookie('access', refresh_token_response.json().get('access'))
-                        response.set_cookie('refresh', refresh_token_response.json().get('refresh'))
+                        response.set_cookie('access', access_token)
+                        response.set_cookie('refresh', refresh_token)
                         return response
                     else:
                         return HttpResponseRedirect("/")
