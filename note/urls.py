@@ -22,7 +22,8 @@ urlpatterns = [
     path("404", views.error_404, name="error_404"),
     path("500", views.error_500, name="error_500"),
     path("login", views.LoginView.as_view(), name="login"),
-    path("logout/", views.LogoutView.as_view(), name="logout"),
+    path("logout", views.LogoutView.as_view(), name="logout"),
+    path("refresh-token", views.RefreshTokenView.as_view(), name="refresh-token"),
     
     # favicon
     path("favicon.ico", RedirectView.as_view(url="/static/favicon.ico", permanent=True)),

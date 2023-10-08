@@ -497,6 +497,53 @@ function removeLocalStorageData(key) {
     return false;
 }
 
+// 토큰 만료 점검 및 새로고침 수행
+function checkToken() {
+    const url = '/';
+    const access = getCookie('access');
+    const access_exp = getCookie('access_exp');
+    const refresh = getCookie('refresh');
+    const refresh_exp = getCookie('refresh_exp');
+
+    // 현재 페이지가 메인 페이지인 경우
+    if (window.location.pathname == url) {
+        return;
+    }
+    // 토큰이 존재하지 않거나 refresh_token이 만료된 경우 메인 페이지로 이동
+    else if (!access || !access_exp || !refresh || !refresh_exp || checkTokenExpiration(refresh_exp)) {
+        window.location.href = url;
+    }
+    // access_token이 만료 또는 만료 예정인 경우 토큰 새로고침 수행
+    else if (checkTokenExpiration(access_exp)) {
+        refreshToken(refresh);
+    }
+}
+
+// 토큰 새로고침 수행
+function refreshToken(token) {
+    const requestUrl = '/note/refresh-token';   //API URL
+    axios(
+        {
+            method: 'POST',
+            url: requestUrl,
+            data: {'refresh': token},
+        })
+        .catch(function (error) {
+            checkRedirectLoginPage(error, $(location).attr('pathname'));  //로그인 페이지 리다이렉트 여부 확인
+            // console.log(error);
+        });
+}
+
+// 토큰 만료 점검
+function checkTokenExpiration(exp) {
+    const expiredTime = new Date(exp).getTime();
+    const nowTime = new Date(Date.now()).getTime();
+    if (nowTime + 30 < expiredTime) {
+        return false;
+    }
+    return true;
+}
+
 $(function () {
     // CSRF 토큰을 쿠키가 아닌 base.html의 djagno 변수에서 조회
     const csrfToken = $('[name=csrfmiddlewaretoken]').val();
@@ -504,4 +551,9 @@ $(function () {
 
     //Modal에 Drag & Drop 기능 추가
     $('.modal-dialog').draggable({ handle: ".modal-header" });
+
+    // 매 초마다 토큰 만료 점검 수행
+    setInterval(function () {
+        checkToken();
+    }, 1000);
 });

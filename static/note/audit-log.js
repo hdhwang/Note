@@ -3,7 +3,7 @@
 const requestUrl = '/audit-log/api';   //API URL
 let startDate = '';                        //검색 기간(시작일)
 let endDate = '';                          //검색 기간(종료일)
-const ip_pattern = /\b((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\b/;
+const ipPattern = /\b((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\b/;
 
 //검색 기간 초기화
 function initDateRange() {
@@ -137,7 +137,7 @@ function initDataTable() {
 
                 //값이 변경된 경우
                 if (that.column(col).search() !== val) {
-                    if (val != '' && col == 2 && ip_pattern.test(val) == false) {
+                    if (val != '' && col == 2 && ipPattern.test(val) == false) {
                         showModal('경고', val + '은 올바른 IP 형식이 아닙니다. <br/>올바른 IP 주소를 입력하십시오.');
                         this.value = '';
                     }
