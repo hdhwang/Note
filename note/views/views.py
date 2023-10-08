@@ -3,7 +3,7 @@ from django.http import JsonResponse, HttpResponse
 from django.http.multipartparser import MultiPartParser
 from django.conf import settings
 from django.views.generic import TemplateView, View
-from note.jwt.tokens import get_access_token, get_refresh_token, req_verify_token, get_token, req_refresh_token
+from note.jwt.tokens import verify_token, get_token
 
 import json
 import logging
@@ -19,24 +19,12 @@ class IndexView(TemplateView):
     context = {}
 
     def get(self, request):
-        access_token = get_access_token(request)
+        access_token = request.COOKIES.get('access')
         if access_token:
-            verify_response = req_verify_token(access_token)
-            
             # 유효한 토큰이 존재하는 경우 대시보드로 이동
+            verify_response = verify_token(access_token)
             if verify_response.status_code == 200:
                 return HttpResponseRedirect("/dashboard")
-
-            # 토큰이 만료된 경우 토큰 refresh 수행
-            elif verify_response.status_code == 401:
-                refresh_token_response = req_refresh_token(get_refresh_token(request))
-
-                if refresh_token_response.status_code == 200:
-                    response = HttpResponseRedirect("/dashboard")
-                    response.set_cookie('access', refresh_token_response.json().get('access'))
-                    response.set_cookie('refresh', refresh_token_response.json().get('refresh'))
-                    return response
-
         return self.render_to_response(self.context)
 
 
@@ -44,8 +32,14 @@ class IndexView(TemplateView):
 class LoginView(View):
     def post(self, request):
         try:
-            response = get_token(request)
-            return JsonResponse(response.json(), status=response.status_code)
+            token_response = get_token(request)
+            response = HttpResponse(status=token_response.status_code)
+            if token_response.status_code == 200 and token_response.json():
+                response.set_cookie('access', token_response.json().get('access'))
+                response.set_cookie('refresh', token_response.json().get('refresh'))
+                response.set_cookie('access_exp', token_response.json().get('access_exp'))
+                response.set_cookie('refresh_exp', token_response.json().get('refresh_exp'))
+            return response
 
         except Exception as e:
             logger.warning(f"[LoginView - post] {str(e)}")
@@ -58,6 +52,8 @@ class LogoutView(View):
             response = HttpResponseRedirect("/")
             response.delete_cookie('access')
             response.delete_cookie('refresh')
+            response.delete_cookie('access_exp')
+            response.delete_cookie('refresh_exp')
             return response
 
         except Exception as e:
@@ -69,14 +65,12 @@ class LogoutView(View):
 def error_400(request, exception):
     response = render(request, "note/error/400.html")
     response.status_code = 400
-
     return response
 
 
 # HTTP 상태 코드 401
 def error_401(request, message=""):
     response = render(request, "note/error/401.html", {"message": message})
-
     return response
 
 
@@ -84,7 +78,6 @@ def error_401(request, message=""):
 def error_403(request, exception):
     response = render(request, "note/error/403.html")
     response.status_code = 403
-
     return response
 
 
@@ -92,7 +85,6 @@ def error_403(request, exception):
 def error_404(request, exception):
     response = render(request, "note/error/404.html")
     response.status_code = 404
-
     return response
 
 
@@ -100,7 +92,6 @@ def error_404(request, exception):
 def error_500(request):
     response = render(request, "note/error/500.html")
     response.status_code = 500
-
     return response
 
 
@@ -127,7 +118,6 @@ class DataTablesKoreanView(View):
             },
             "oAria": {"sSortAscending": ": 오름차순 정렬", "sSortDescending": ": 내림차순 정렬"},
         }
-
         return JsonResponse(response)
 
 
@@ -138,7 +128,6 @@ class TableAPIView(View):
     def get(self, request, *args, **kwargs):
         try:
             params = {}
-
             page = 1
             page_size = 10
             start = 0
@@ -188,46 +177,15 @@ class TableAPIView(View):
             if response.status_code == 200 and response.json():
                 data = response.json().get("results")
                 count = response.json().get("count")
-
-            # 토큰이 만료된 경우 토큰 refresh 수행
-            elif response.status_code == 401:
-                refresh_token_response = req_refresh_token(kwargs.get('refresh_token'))
-                if refresh_token_response.status_code == 200:
-                    access_token = refresh_token_response.json().get('access')
-                    refresh_token = refresh_token_response.json().get('refresh')
-                    headers["Authorization"] = f"Bearer {access_token}"
-                    response = requests.get(
-                        f"{self.base_url}/{self.sub_path}",
-                        params=params,
-                        headers=headers,
-                        verify=False,
-                    )
-                    if response.status_code == 200 and response.json():
-                        data = response.json().get("results")
-                        count = response.json().get("count")
-
-                        response = JsonResponse(
-                            {
-                                "draw": draw,
-                                "recordsTotal": count,
-                                "recordsFiltered": count,
-                                "data": data,
-                            }
-                        )
-                        response.set_cookie('access', access_token)
-                        response.set_cookie('refresh', refresh_token)
-                        return response
-                    else:
-                        return HttpResponseRedirect("/")
-                        
-            return JsonResponse(
-                {
-                    "draw": draw,
-                    "recordsTotal": count,
-                    "recordsFiltered": count,
-                    "data": data,
-                }
-            )
+                return JsonResponse(
+                    {
+                        "draw": draw,
+                        "recordsTotal": count,
+                        "recordsFiltered": count,
+                        "data": data,
+                    }
+                )
+            return HttpResponse(status=response.status_code)
         except Exception as e:
             logger.warning(f"[TableAPIView - get] {str(e)}")
             return HttpResponse(status=400)
@@ -235,10 +193,8 @@ class TableAPIView(View):
     def post(self, request, *args, **kwargs):
         try:
             data = {}
-
             for key, value in request.POST.items():
                 data[key] = value
-
             headers = {
                 "Authorization": f"Bearer {kwargs.get('access_token')}",
                 "Content-Type": "application/json",
@@ -249,27 +205,6 @@ class TableAPIView(View):
                 headers=headers,
                 verify=False,
             )
-
-            # 토큰이 만료된 경우 토큰 refresh 수행
-            if response.status_code == 401:
-                refresh_token_response = req_refresh_token(kwargs.get('refresh_token'))
-                if refresh_token_response.status_code == 200:
-                    access_token = refresh_token_response.json().get('access')
-                    refresh_token = refresh_token_response.json().get('refresh')
-                    headers["Authorization"] = f"Bearer {access_token}"
-                    response = requests.post(
-                        f"{self.base_url}/{self.sub_path}",
-                        data=json.dumps(data),
-                        headers=headers,
-                        verify=False,
-                    )
-                    response = HttpResponse(status=response.status_code)
-                    response.set_cookie('access', access_token)
-                    response.set_cookie('refresh', refresh_token)
-                    return response
-                else:
-                    return HttpResponseRedirect("/")
-
             return HttpResponse(status=response.status_code)
 
         except Exception as e:
@@ -284,10 +219,8 @@ class TableAPIView(View):
                     request.META, request, request.upload_handlers
                 ).parse()[0]
                 data = {}
-
                 for key, value in put_data.items():
                     data[key] = value
-
                 headers = {
                     "Authorization": f"Bearer {kwargs.get('access_token')}",
                     "Content-Type": "application/json",
@@ -298,27 +231,6 @@ class TableAPIView(View):
                     headers=headers,
                     verify=False,
                 )
-
-                # 토큰이 만료된 경우 토큰 refresh 수행
-                if response.status_code == 401:
-                    refresh_token_response = req_refresh_token(kwargs.get('refresh_token'))
-                    if refresh_token_response.status_code == 200:
-                        access_token = refresh_token_response.json().get('access')
-                        refresh_token = refresh_token_response.json().get('refresh')
-                        headers["Authorization"] = f"Bearer {access_token}"
-                        response = requests.put(
-                            f"{self.base_url}/{self.sub_path}/{req_id}",
-                            data=json.dumps(data),
-                            headers=headers,
-                            verify=False,
-                        )
-                        response = HttpResponse(status=response.status_code)
-                        response.set_cookie('access', access_token)
-                        response.set_cookie('refresh', refresh_token)
-                        return response
-                    else:
-                        return HttpResponseRedirect("/")
-
                 return HttpResponse(status=response.status_code)
 
         except Exception as e:
@@ -337,25 +249,6 @@ class TableAPIView(View):
                     headers=headers,
                     verify=False,
                 )
-                # 토큰이 만료된 경우 토큰 refresh 수행
-                if response.status_code == 401:
-                    refresh_token_response = req_refresh_token(kwargs.get('refresh_token'))
-                    if refresh_token_response.status_code == 200:
-                        access_token = refresh_token_response.json().get('access')
-                        refresh_token = refresh_token_response.json().get('refresh')
-                        headers["Authorization"] = f"Bearer {access_token}"
-                        response = requests.delete(
-                            f"{self.base_url}/{self.sub_path}/{req_id}",
-                            headers=headers,
-                            verify=False,
-                        )
-                        response = HttpResponse(status=response.status_code)
-                        response.set_cookie('access', access_token)
-                        response.set_cookie('refresh', refresh_token)
-                        return response
-                    else:
-                        return HttpResponseRedirect("/")
-
                 return HttpResponse(status=response.status_code)
 
         except Exception as e:

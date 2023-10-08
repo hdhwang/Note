@@ -351,6 +351,9 @@ function checkRedirectLoginPage(data, next = '') {
     else if (data && data.request && data.request.responseURL && data.request.responseURL.indexOf('?next=') > -1) {
         location.replace(url);
     }
+    else if (data.toString().indexOf('Unauthorized') > -1) {
+        location.replace(url);
+    }
     else if (data.toString().indexOf('Error: Request failed with status code 401') > -1) {
         location.replace(url);
     }
