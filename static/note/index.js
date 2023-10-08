@@ -26,10 +26,6 @@ function tryLogin(param) {
         })
         .then(function (response) {
             if (response && response.status == 200) {
-                // 토큰을 쿠키에 저장
-                setCookie('access', response.data.access);
-                setCookie('refresh', response.data.refresh);
-
                 window.location = window.location.origin + $('#next').val();
             }
 

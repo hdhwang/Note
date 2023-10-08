@@ -20,7 +20,7 @@ function initDataTable() {
                 delete data.columns;
             },
             error: function (xhr, error, thrown) {
-                checkRedirectLoginPage(error, $(location).attr('pathname'));  //로그인 페이지 리다이렉트 여부 확인
+                checkRedirectLoginPage(xhr.statusText, $(location).attr('pathname'));  //로그인 페이지 리다이렉트 여부 확인
 
                 let msg = getHttpStatusMessage(xhr.status) != '' ? getHttpStatusMessage(xhr.status) : '오류가 발생하였습니다. 잠시 후 다시 시도해 주십시오.';
                 toastr.error(msg);
