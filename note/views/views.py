@@ -1,3 +1,4 @@
+from datetime import datetime
 from django.shortcuts import HttpResponseRedirect, render
 from django.http import JsonResponse, HttpResponse
 from django.http.multipartparser import MultiPartParser
@@ -35,10 +36,13 @@ class LoginView(View):
             token_response = get_token(request)
             response = HttpResponse(status=token_response.status_code)
             if token_response.status_code == 200 and token_response.json():
-                response.set_cookie('access', token_response.json().get('access'))
-                response.set_cookie('refresh', token_response.json().get('refresh'))
-                response.set_cookie('access_exp', token_response.json().get('access_exp'))
-                response.set_cookie('refresh_exp', token_response.json().get('refresh_exp'))
+                secure = getattr(settings, "SET_COOKIE_SECURE")
+                access_expires = datetime.strptime(token_response.json().get('access_exp'), "%Y-%m-%d %H:%M:%S.%f")
+                refresh_expires = datetime.strptime(token_response.json().get('refresh_exp'), "%Y-%m-%d %H:%M:%S.%f")
+                response.set_cookie('access', token_response.json().get('access'), secure=secure, httponly=True, samesite='lax', expires=access_expires)
+                response.set_cookie('refresh', token_response.json().get('refresh'), secure=secure, httponly=True, samesite='lax', expires=refresh_expires)
+                response.set_cookie('access_exp', token_response.json().get('access_exp'), secure=secure, httponly=False, samesite='lax', expires=access_expires)
+                response.set_cookie('refresh_exp', token_response.json().get('refresh_exp'), secure=secure, httponly=False, samesite='lax', expires=refresh_expires)
             return response
 
         except Exception as e:
@@ -64,11 +68,13 @@ class LogoutView(View):
 class RefreshTokenView(View):
     def post(self, request):
         try:
-            refresh_token_response = refresh_token(request.POST.get('refresh'))
+            refresh_token_response = refresh_token(request.COOKIES.get('refresh'))
             response = HttpResponse(status=refresh_token_response.status_code)
             if refresh_token_response.status_code == 200 and refresh_token_response.json():
-                response.set_cookie('access', refresh_token_response.json().get('access'))
-                response.set_cookie('access_exp', refresh_token_response.json().get('access_exp'))
+                secure = getattr(settings, "SET_COOKIE_SECURE")
+                access_expires = datetime.strptime(token_response.json().get('access_exp'), "%Y-%m-%d %H:%M:%S.%f")
+                response.set_cookie('access', refresh_token_response.json().get('access'), secure=secure, httponly=True, samesite='lax', expires=access_expires)
+                response.set_cookie('access_exp', refresh_token_response.json().get('access_exp'), secure=secure, httponly=False, samesite='lax', expires=access_expires)
             return response
 
         except Exception as e:
