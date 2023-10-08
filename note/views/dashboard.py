@@ -42,16 +42,26 @@ class CountAPIView(View):
             # 토큰이 만료된 경우 토큰 refresh 수행
             elif response.status_code == 401:
                 refresh_token_response = refresh_token(kwargs.get('refresh_token'))
-
                 if refresh_token_response.status_code == 200:
-                    response = JsonResponse({"count": count})
-                    response.set_cookie('access', refresh_token_response.json().get('access'))
-                    response.set_cookie('refresh', refresh_token_response.json().get('refresh'))
-                    return response
+                    access_token = refresh_token_response.json().get('access')
+                    refresh_token = refresh_token_response.json().get('refresh')
+                    headers["Authorization"] = f"Bearer {access_token}"
+                    response = requests.get(
+                        f"{self.base_url}/{self.sub_path}",
+                        params=params,
+                        headers=headers,
+                        verify=False,
+                    )
+                    if response.status_code == 200 and response.json():
+                        count = response.json().get("count")
+                        response = JsonResponse({"count": count})
+                        response.set_cookie('access', access_token)
+                        response.set_cookie('refresh', refresh_token)
+                        return response
                 else:
-                    return HttpResponse(status=response.status_code)
-            else:
-                return HttpResponse(status=response.status_code)
+                    return HttpResponseRedirect("/")
+
+            return HttpResponse(status=response.status_code)
 
         except Exception as e:
             logger.warning(f"[CountAPI - get] {str(e)}")
