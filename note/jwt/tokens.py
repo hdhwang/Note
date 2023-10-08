@@ -20,10 +20,10 @@ def get_token(request):
     headers = {"Content-Type": "application/json"}
     return requests.post(f"{get_jwt_base_url()}", data=json.dumps(data), headers=headers, verify=False)
 
-def refresh_token(token):
+def req_refresh_token(token):
     headers = {"Content-Type": "application/json"}
     return requests.post(f"{get_jwt_base_url()}/refresh", data=json.dumps({'refresh': token}), headers=headers, verify=False)
 
-def verify_token(token):
+def req_verify_token(token):
     headers = {"Content-Type": "application/json"}
     return requests.post(f"{get_jwt_base_url()}/verify", data=json.dumps({'token': token}), headers=headers, verify=False)

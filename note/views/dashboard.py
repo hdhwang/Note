@@ -1,7 +1,7 @@
 from django.conf import settings
 from django.http import JsonResponse, HttpResponse
 from django.views.generic import TemplateView, View
-from note.jwt.tokens import get_access_token, get_refresh_token, refresh_token
+from note.jwt.tokens import get_access_token, get_refresh_token, req_refresh_token
 
 import logging
 import requests
@@ -41,7 +41,7 @@ class CountAPIView(View):
                 
             # 토큰이 만료된 경우 토큰 refresh 수행
             elif response.status_code == 401:
-                refresh_token_response = refresh_token(kwargs.get('refresh_token'))
+                refresh_token_response = req_refresh_token(kwargs.get('refresh_token'))
                 if refresh_token_response.status_code == 200:
                     access_token = refresh_token_response.json().get('access')
                     refresh_token = refresh_token_response.json().get('refresh')

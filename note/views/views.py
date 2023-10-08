@@ -3,7 +3,7 @@ from django.http import JsonResponse, HttpResponse
 from django.http.multipartparser import MultiPartParser
 from django.conf import settings
 from django.views.generic import TemplateView, View
-from note.jwt.tokens import get_access_token, get_refresh_token, verify_token, get_token, refresh_token
+from note.jwt.tokens import get_access_token, get_refresh_token, req_verify_token, get_token, req_refresh_token
 
 import json
 import logging
@@ -21,7 +21,7 @@ class IndexView(TemplateView):
     def get(self, request):
         access_token = get_access_token(request)
         if access_token:
-            verify_response = verify_token(access_token)
+            verify_response = req_verify_token(access_token)
             
             # 유효한 토큰이 존재하는 경우 대시보드로 이동
             if verify_response.status_code == 200:
@@ -29,7 +29,7 @@ class IndexView(TemplateView):
 
             # 토큰이 만료된 경우 토큰 refresh 수행
             elif verify_response.status_code == 401:
-                refresh_token_response = refresh_token(get_refresh_token(request))
+                refresh_token_response = req_refresh_token(get_refresh_token(request))
 
                 if refresh_token_response.status_code == 200:
                     response = HttpResponseRedirect("/dashboard")
@@ -191,7 +191,7 @@ class TableAPIView(View):
 
             # 토큰이 만료된 경우 토큰 refresh 수행
             elif response.status_code == 401:
-                refresh_token_response = refresh_token(kwargs.get('refresh_token'))
+                refresh_token_response = req_refresh_token(kwargs.get('refresh_token'))
                 if refresh_token_response.status_code == 200:
                     access_token = refresh_token_response.json().get('access')
                     refresh_token = refresh_token_response.json().get('refresh')
@@ -252,7 +252,7 @@ class TableAPIView(View):
 
             # 토큰이 만료된 경우 토큰 refresh 수행
             if response.status_code == 401:
-                refresh_token_response = refresh_token(kwargs.get('refresh_token'))
+                refresh_token_response = req_refresh_token(kwargs.get('refresh_token'))
                 if refresh_token_response.status_code == 200:
                     access_token = refresh_token_response.json().get('access')
                     refresh_token = refresh_token_response.json().get('refresh')
@@ -301,7 +301,7 @@ class TableAPIView(View):
 
                 # 토큰이 만료된 경우 토큰 refresh 수행
                 if response.status_code == 401:
-                    refresh_token_response = refresh_token(kwargs.get('refresh_token'))
+                    refresh_token_response = req_refresh_token(kwargs.get('refresh_token'))
                     if refresh_token_response.status_code == 200:
                         access_token = refresh_token_response.json().get('access')
                         refresh_token = refresh_token_response.json().get('refresh')
@@ -339,7 +339,7 @@ class TableAPIView(View):
                 )
                 # 토큰이 만료된 경우 토큰 refresh 수행
                 if response.status_code == 401:
-                    refresh_token_response = refresh_token(kwargs.get('refresh_token'))
+                    refresh_token_response = req_refresh_token(kwargs.get('refresh_token'))
                     if refresh_token_response.status_code == 200:
                         access_token = refresh_token_response.json().get('access')
                         refresh_token = refresh_token_response.json().get('refresh')
