@@ -3,7 +3,7 @@ from django.http import JsonResponse, HttpResponse
 from django.http.multipartparser import MultiPartParser
 from django.conf import settings
 from django.views.generic import TemplateView, View
-from note.jwt.tokens import verify_token, get_token
+from note.jwt.tokens import verify_token, get_token, refresh_token
 
 import json
 import logging
@@ -58,6 +58,21 @@ class LogoutView(View):
 
         except Exception as e:
             logger.warning(f"[LogoutView - get] {str(e)}")
+            return HttpResponse(status=400)
+
+# 토큰 새로고침
+class RefreshTokenView(View):
+    def post(self, request):
+        try:
+            refresh_token_response = refresh_token(request.POST.get('refresh'))
+            response = HttpResponse(status=refresh_token_response.status_code)
+            if refresh_token_response.status_code == 200 and refresh_token_response.json():
+                response.set_cookie('access', refresh_token_response.json().get('access'))
+                response.set_cookie('access_exp', refresh_token_response.json().get('access_exp'))
+            return response
+
+        except Exception as e:
+            logger.warning(f"[RefreshTokenView - post] {str(e)}")
             return HttpResponse(status=400)
 
 
