@@ -1,6 +1,6 @@
 from django.urls import path
 from django.views.generic.base import RedirectView
-from note.jwt.decorators import jwt_decorator
+from note.jwt.decorators import access_token_required, access_token_verified
 
 from note.views import (
     views,
@@ -11,6 +11,7 @@ from note.views import (
     note,
     lotto,
     guest_book,
+    account,
 )
 
 urlpatterns = [
@@ -32,37 +33,40 @@ urlpatterns = [
     path("data-tables/korean", views.DataTablesKoreanView.as_view()),
     
     # 대시보드
-    path("dashboard", jwt_decorator(dashboard.DashboardView.as_view()), name="dashboard"),
-    path("dashboard/api/bank-account", jwt_decorator(dashboard.BankAccountCntAPI.as_view())),
-    path("dashboard/api/serial", jwt_decorator(dashboard.SerialCntAPI.as_view())),
-    path("dashboard/api/note", jwt_decorator(dashboard.NoteCntAPI.as_view())),
-    path("dashboard/api/guest-book", jwt_decorator(dashboard.GuestBookCntAPI.as_view())),
+    path("dashboard", access_token_verified(dashboard.DashboardView.as_view()), name="dashboard"),
+    path("dashboard/api/bank-account", access_token_required(dashboard.BankAccountCntAPI.as_view())),
+    path("dashboard/api/serial", access_token_required(dashboard.SerialCntAPI.as_view())),
+    path("dashboard/api/note", access_token_required(dashboard.NoteCntAPI.as_view())),
+    path("dashboard/api/guest-book", access_token_required(dashboard.GuestBookCntAPI.as_view())),
     
     # 계좌번호 관리
-    path("bank-account", jwt_decorator(bank_account.BankAccountView.as_view()), name="bank_account"),
-    path("bank-account/api", jwt_decorator(bank_account.BankAccountAPI.as_view())),
-    path("bank-account/api/<int:req_id>", jwt_decorator(bank_account.BankAccountAPI.as_view())),
+    path("bank-account", access_token_verified(bank_account.BankAccountView.as_view()), name="bank_account"),
+    path("bank-account/api", access_token_required(bank_account.BankAccountAPI.as_view())),
+    path("bank-account/api/<int:req_id>", access_token_required(bank_account.BankAccountAPI.as_view())),
     
     # 시리얼 번호 관리
-    path("serial", jwt_decorator(serial.SerialView.as_view()), name="serial"),
-    path("serial/api", jwt_decorator(serial.SerialAPI.as_view())),
-    path("serial/api/<int:req_id>", jwt_decorator(serial.SerialAPI.as_view())),
+    path("serial", access_token_verified(serial.SerialView.as_view()), name="serial"),
+    path("serial/api", access_token_required(serial.SerialAPI.as_view())),
+    path("serial/api/<int:req_id>", access_token_required(serial.SerialAPI.as_view())),
     
     # 노트 관리
-    path("note", jwt_decorator(note.NoteView.as_view()), name="note"),
-    path("note/api", jwt_decorator(note.NoteAPI.as_view())),
-    path("note/api/<int:req_id>", jwt_decorator(note.NoteAPI.as_view())),
+    path("note", access_token_verified(note.NoteView.as_view()), name="note"),
+    path("note/api", access_token_required(note.NoteAPI.as_view())),
+    path("note/api/<int:req_id>", access_token_required(note.NoteAPI.as_view())),
     
     # 결혼식 방명록
-    path("guest-book", jwt_decorator(guest_book.GuestBookView.as_view()), name="guest_book"),
-    path("guest-book/api", jwt_decorator(guest_book.GuestBookAPI.as_view())),
-    path("guest-book/api/<int:req_id>", jwt_decorator(guest_book.GuestBookAPI.as_view())),
+    path("guest-book", access_token_verified(guest_book.GuestBookView.as_view()), name="guest_book"),
+    path("guest-book/api", access_token_required(guest_book.GuestBookAPI.as_view())),
+    path("guest-book/api/<int:req_id>", access_token_required(guest_book.GuestBookAPI.as_view())),
     
     # 로또 생성기
-    path("lotto", jwt_decorator(lotto.LottoView.as_view()), name="lotto"),
-    path("lotto/api", jwt_decorator(lotto.LottoAPI.as_view())),
+    path("lotto", access_token_verified(lotto.LottoView.as_view()), name="lotto"),
+    path("lotto/api", access_token_required(lotto.LottoAPI.as_view())),
     
     # 감사 로그
-    path("audit-log", jwt_decorator(audit_log.AuditLogView.as_view()), name="audit_log"),
-    path("audit-log/api", jwt_decorator(audit_log.AuditLogAPI.as_view())),
+    path("audit-log", access_token_verified(audit_log.AuditLogView.as_view()), name="audit_log"),
+    path("audit-log/api", access_token_required(audit_log.AuditLogAPI.as_view())),
+
+    # 계정 정보
+    path("account", access_token_verified(account.AccountView.as_view()), name="account",),
 ]
