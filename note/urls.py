@@ -67,6 +67,7 @@ urlpatterns = [
     path("audit-log", access_token_verified(audit_log.AuditLogView.as_view()), name="audit_log"),
     path("audit-log/api", access_token_required(audit_log.AuditLogAPI.as_view())),
 
-    # 계정 정보
+    # 계정 관리
     path("account", access_token_verified(account.AccountView.as_view()), name="account",),
+    path("account/api", access_token_required(account.AccountAPIView.as_view())),
 ]
