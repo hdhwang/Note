@@ -73,7 +73,7 @@ class RefreshTokenView(View):
             response = HttpResponse(status=refresh_token_response.status_code)
             if refresh_token_response.status_code == 200 and refresh_token_response.json():
                 secure = getattr(settings, "SET_COOKIE_SECURE")
-                access_expires = datetime.fromtimestamp(token_response.json().get('access_exp'))
+                access_expires = datetime.fromtimestamp(refresh_token_response.json().get('access_exp'))
                 response.set_cookie('access', refresh_token_response.json().get('access'), secure=secure, httponly=True, samesite='lax', expires=access_expires)
                 response.set_cookie('access_exp', refresh_token_response.json().get('access_exp'), secure=secure, httponly=False, samesite='lax', expires=access_expires)
             return response
