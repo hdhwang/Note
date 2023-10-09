@@ -37,8 +37,8 @@ class LoginView(View):
             response = HttpResponse(status=token_response.status_code)
             if token_response.status_code == 200 and token_response.json():
                 secure = getattr(settings, "SET_COOKIE_SECURE")
-                access_expires = datetime.strptime(token_response.json().get('access_exp'), "%Y-%m-%d %H:%M:%S.%f")
-                refresh_expires = datetime.strptime(token_response.json().get('refresh_exp'), "%Y-%m-%d %H:%M:%S.%f")
+                access_expires = datetime.fromtimestamp(token_response.json().get('access_exp'))
+                refresh_expires = datetime.fromtimestamp(token_response.json().get('refresh_exp'))
                 response.set_cookie('access', token_response.json().get('access'), secure=secure, httponly=True, samesite='lax', expires=access_expires)
                 response.set_cookie('refresh', token_response.json().get('refresh'), secure=secure, httponly=True, samesite='lax', expires=refresh_expires)
                 response.set_cookie('access_exp', token_response.json().get('access_exp'), secure=secure, httponly=False, samesite='lax', expires=access_expires)
@@ -73,7 +73,7 @@ class RefreshTokenView(View):
             response = HttpResponse(status=refresh_token_response.status_code)
             if refresh_token_response.status_code == 200 and refresh_token_response.json():
                 secure = getattr(settings, "SET_COOKIE_SECURE")
-                access_expires = datetime.strptime(refresh_token_response.json().get('access_exp'), "%Y-%m-%d %H:%M:%S.%f")
+                access_expires = datetime.fromtimestamp(token_response.json().get('access_exp'))
                 response.set_cookie('access', refresh_token_response.json().get('access'), secure=secure, httponly=True, samesite='lax', expires=access_expires)
                 response.set_cookie('access_exp', refresh_token_response.json().get('access_exp'), secure=secure, httponly=False, samesite='lax', expires=access_expires)
             return response
