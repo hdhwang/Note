@@ -444,7 +444,7 @@ function refreshToken() {
 
 // 토큰 만료 점검
 function checkTokenExpiration(exp) {
-    if ((Date.now() / 1000) + 30 < exp) {
+    if (parseInt(Date.now() / 1000) + 30 < parseInt(exp)) {
         return false;
     }
     return true;
