@@ -64,6 +64,7 @@ class LogoutView(View):
             logger.warning(f"[LogoutView - get] {str(e)}")
             return HttpResponse(status=400)
 
+
 # 토큰 새로고침
 class RefreshTokenView(View):
     def post(self, request):
