@@ -1,11 +1,11 @@
+import json
+import logging
+
+import requests
 from django.conf import settings
 from django.http import HttpResponse
 from django.http.multipartparser import MultiPartParser
 from django.views.generic import TemplateView, View
-
-import json
-import logging
-import requests
 
 logger = logging.getLogger(__name__)
 

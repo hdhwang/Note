@@ -1,5 +1,6 @@
 from django.http import HttpResponse
 from django.views.generic import TemplateView
+
 from note.views.views import TableAPIView
 
 

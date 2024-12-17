@@ -10,11 +10,9 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
-from config.settings.KMSHelper import get_kms_value
-from pathlib import Path
-
 import os
-import logging
+
+from config.settings.kms_helper import get_kms_value
 
 # 파일에서 서버 정보 로드(SECRET_KEY, ALLOWED_HOSTS, DATABASES)
 SETTING_PRD_DIC = get_kms_value()

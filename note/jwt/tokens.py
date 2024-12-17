@@ -1,7 +1,7 @@
-from django.conf import settings
-
 import json
+
 import requests
+from django.conf import settings
 
 base_url = getattr(settings, 'JWT_BASE_URL')
 

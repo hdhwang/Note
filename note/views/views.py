@@ -1,16 +1,17 @@
-from datetime import datetime
-from django.shortcuts import HttpResponseRedirect, render
-from django.http import JsonResponse, HttpResponse
-from django.http.multipartparser import MultiPartParser
-from django.conf import settings
-from django.views.generic import TemplateView, View
-from note.jwt.tokens import verify_token, get_token, refresh_token
-
 import json
 import logging
 import math
 import re
+from datetime import datetime
+
 import requests
+from django.conf import settings
+from django.http import JsonResponse, HttpResponse
+from django.http.multipartparser import MultiPartParser
+from django.shortcuts import HttpResponseRedirect, render
+from django.views.generic import TemplateView, View
+
+from note.jwt.tokens import verify_token, get_token, refresh_token
 
 logger = logging.getLogger(__name__)
 table_filter_regex = re.compile("filter\[[0-9]{1,3}\]\[value\]")
