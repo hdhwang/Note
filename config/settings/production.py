@@ -1,3 +1,5 @@
+from .base import *
+
 DEBUG = False
 
 BASE_URL = "https://192.168.0.3:8080"
