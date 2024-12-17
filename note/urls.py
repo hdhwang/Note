@@ -1,7 +1,7 @@
 from django.urls import path
 from django.views.generic.base import RedirectView
-from note.jwt.decorators import access_token_required, access_token_verified
 
+from note.jwt.decorators import access_token_required, access_token_verified
 from note.views import (
     views,
     audit_log,

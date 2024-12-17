@@ -1,6 +1,7 @@
 from django.shortcuts import redirect
+
 from note.jwt.tokens import verify_token
-from django.conf import settings
+
 
 def access_token_required(func):
     def wrapper(request, *args, **kwargs):

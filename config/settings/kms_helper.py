@@ -1,6 +1,7 @@
 import json
 import logging
 import os
+
 import requests
 
 logger = logging.getLogger(__name__)
@@ -30,7 +31,7 @@ def get_kms_value():
 
 def get_server_info_value(key: str):
     with open(
-        os.path.dirname(os.path.abspath(__file__)) + "/KMS.json",
+        os.path.dirname(os.path.abspath(__file__)) + "/kms.json",
         mode="rt",
         encoding="utf-8",
     ) as file:

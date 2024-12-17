@@ -1,9 +1,9 @@
+import logging
+
+import requests
 from django.conf import settings
 from django.http import JsonResponse, HttpResponse
 from django.views.generic import TemplateView, View
-
-import logging
-import requests
 
 logger = logging.getLogger(__name__)
 
