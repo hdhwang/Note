@@ -14,7 +14,7 @@ from django.views.generic import TemplateView, View
 from note.jwt.tokens import verify_token, get_token, refresh_token
 
 logger = logging.getLogger(__name__)
-table_filter_regex = re.compile("filter\[[0-9]{1,3}\]\[value\]")
+table_filter_regex = re.compile("filter\[[0-9]{1,3}\]\[value]")
 
 class IndexView(TemplateView):
     template_name = "note/index.html"
