@@ -10,27 +10,30 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
+import environ
 import os
-
-from config.settings.kms_helper import get_kms_value
-
-# 파일에서 서버 정보 로드(SECRET_KEY, ALLOWED_HOSTS, DATABASES)
-SETTING_PRD_DIC = get_kms_value()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+# environ 초기화
+env = environ.Env(
+    DEBUG=(bool, False)  # DEBUG 값을 boolean으로 캐스팅
+)
+
+# .env 파일 로드
+environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = SETTING_PRD_DIC['SECRET_KEY']
+SECRET_KEY = env("SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = False
 
-ALLOWED_HOSTS =  SETTING_PRD_DIC['ALLOWED_HOSTS']
+ALLOWED_HOSTS =  env.list("ALLOWED_HOSTS", default=["localhost", "127.0.0.1"])
 
 # Application definition
 
