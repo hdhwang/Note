@@ -20,3 +20,9 @@ $ python3 manage.py runserver --settings=config.settings.development
 ```
 $ pip3 freeze > requirements.txt
 ```
+
+> .env 파일 생성
+```
+SECRET_KEY=XXXX
+ALLOWED_HOSTS=XXXX,XXXX,XXXX
+```
